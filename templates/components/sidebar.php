@@ -30,10 +30,16 @@ $nav = function (string $path) use ($current): string {
                 <li><a href="<?= e(url('/encyclopedie')) ?>"<?= $nav('/encyclopedie') ?>"><i class="fa-solid fa-book" aria-hidden="true"></i> Encyclopédie</a></li>
                 <li><a href="<?= e(url('/macollection')) ?>"<?= $nav('/macollection') ?>"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Ma collection</a></li>
                 <li><a href="<?= e(url('/conseils')) ?>"<?= $nav('/conseils') ?>"><i class="fa-solid fa-heart" aria-hidden="true"></i> Conseils</a></li>
+                <?php if (is_logged_in()): ?>
+                    <li><a href="<?= e(url('/notifications')) ?>"<?= $nav('/notifications') ?>"><i class="fa-solid fa-bell" aria-hidden="true"></i> Notifications</a></li>
+                <?php endif; ?>
             </ul>
             <ul class="menu-group-user">
-                <?php if (has_role(['admin', 'moderateur'])): ?>
+                <?php if (has_role('admin')): ?>
                     <li><a href="<?= e(url('/administration')) ?>"<?= $nav('/administration') ?>"><i class="fa-solid fa-gear" aria-hidden="true"></i> Administration</a></li>
+                <?php endif; ?>
+                <?php if (has_role(['admin', 'moderateur'])): ?>
+                    <li><a href="<?= e(url('/moderation')) ?>"<?= $nav('/moderation') ?>"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Modération</a></li>
                 <?php endif; ?>
                 <?php if (is_logged_in()): ?>
                     <li>

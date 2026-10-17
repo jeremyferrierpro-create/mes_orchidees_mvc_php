@@ -55,6 +55,44 @@ class OrchidRepository
     }
 
     /**
+     * Orchidées EN ATTENTE de modération (is_published = 0), triées les plus récentes.
+     *
+     * Réservé au workflow de modération (admin + modérateur).
+     *
+     * @return Orchid[]
+     */
+    public function findUnpublished(): array
+    {
+        $sql  = 'SELECT ' . self::COLUMNS . ' FROM orchids WHERE is_published = 0 ORDER BY created_at DESC, name ASC';
+        $rows = $this->pdo()->query($sql)->fetchAll();
+        return array_map(fn(array $r) => Orchid::fromRow($r), $rows);
+    }
+
+    /**
+     * Nombre de propositions en attente de validation (badge de modération).
+     *
+     * @return int
+     */
+    public function countUnpublished(): int
+    {
+        return (int) $this->pdo()->query('SELECT COUNT(*) FROM orchids WHERE is_published = 0')->fetchColumn();
+    }
+
+    /**
+     * Publie (ou dépublie) une orchidée par id. Utilisée par le workflow de modération.
+     *
+     * @param string $id       Slug de l'espèce.
+     * @param bool   $published true = publiée.
+     * @return bool True si une ligne a été mise à jour.
+     */
+    public function setPublished(string $id, bool $published): bool
+    {
+        $stmt = $this->pdo()->prepare('UPDATE orchids SET is_published = :pub WHERE id = :id');
+        $stmt->execute([':pub' => $published ? 1 : 0, ':id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
      * Recherche plein-texte (index FULLTEXT ngram) + repli LIKE sur nom/vernaculaire.
      *
      * @param string $query Terme de recherche (min. 2 caractères).

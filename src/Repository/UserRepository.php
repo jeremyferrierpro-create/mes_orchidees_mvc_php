@@ -102,6 +102,77 @@ class UserRepository implements UserRepositoryInterface
     }
 
     /**
+     * Liste complète des utilisateurs (back-office admin), tri par nom puis prénom.
+     *
+     * N'expose JAMAIS le hash de mot de passe.
+     *
+     * @return array[]
+     */
+    public function findAll(): array
+    {
+        $sql = 'SELECT id, nom, prenom, email, role, created_at, updated_at
+                  FROM users ORDER BY nom ASC, prenom ASC';
+        return $this->pdo()->query($sql)->fetchAll();
+    }
+
+    /**
+     * Met à jour un utilisateur (nom, prénom, email, rôle) par id.
+     *
+     * Le mot de passe n'est jamais touché ici (réinitialisation gérée ailleurs).
+     *
+     * @param array $user Champs : id + (nom, prenom, email, role).
+     * @return bool True si une ligne a été modifiée.
+     */
+    public function update(array $user): bool
+    {
+        $sql = 'UPDATE users
+                   SET nom = :nom, prenom = :prenom, email = :email, role = :role
+                 WHERE id = :id';
+        $stmt = $this->pdo()->prepare($sql);
+        $stmt->execute([
+            ':nom'    => $user['nom'],
+            ':prenom' => $user['prenom'],
+            ':email'  => $user['email'],
+            ':role'   => $user['role'] ?? 'user',
+            ':id'     => $user['id'],
+        ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Supprime un utilisateur par id (CASCADE : collections/notifications associées).
+     *
+     * @param string $id UUID de l'utilisateur.
+     * @return bool True si une ligne a été supprimée.
+     */
+    public function delete(string $id): bool
+    {
+        $stmt = $this->pdo()->prepare('DELETE FROM users WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Un email est-il déjà pris ? (contrôle d'unicité à la création/édition admin).
+     *
+     * @param string $email Email à tester.
+     * @param string|null $excludeId Id à ignorer (édition de soi-même).
+     * @return bool
+     */
+    public function emailExists(string $email, ?string $excludeId = null): bool
+    {
+        $sql    = 'SELECT 1 FROM users WHERE email = :email LIMIT 1';
+        $params = [':email' => $email];
+        if ($excludeId !== null) {
+            $sql .= ' AND id <> :eid';
+            $params[':eid'] = $excludeId;
+        }
+        $stmt = $this->pdo()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
      * Génère un UUID v4 (122 bits aléatoires + versions/variante).
      *
      * @return string UUID au format 8-4-4-4-12.
