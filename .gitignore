@@ -6,6 +6,7 @@ projet_fil_rouge/
 .env
 .env.*
 !.env.example
+!.env.production.example
 # --- Application PHP / outils ---
 vendor/
 node_modules/

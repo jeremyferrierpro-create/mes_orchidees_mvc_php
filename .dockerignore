@@ -1,0 +1,42 @@
+# ==============================================================================
+# .dockerignore — limite le contexte d'envoi au démon Docker à la build.
+# ------------------------------------------------------------------------------
+# SANS ce fichier, `COPY . /var/www/html/` embarquerait tout le workspace
+# (docs/, supports de cours, ISO, videos, .env, node_modules) dans les couches
+# intermediaires de l'image -> image enorme et risque de fuite de secrets
+# (le .env resterait present dans une couche intermediaire meme supprime ensuite).
+# Le Dockerfile regere l'autoloader via `composer dump-autoload` : vendor/ est
+# donc exclu (reconstruit a la build, plus leger et plus propre).
+# ==============================================================================
+
+# --- Version control / IDE ---
+.git
+.gitignore
+.gitattributes
+.agent/
+
+# --- Secrets et environnement local (JAMAIS dans l'image) ---
+.env
+.env.*
+!.env.production.example
+
+# --- Dependances regerees a la build (composer dump-autoload) ---
+vendor/
+composer.lock
+
+# --- Artefacts lourds / hors application web ---
+node_modules/
+docs/
+archive/
+data/migrations/
+*.iso
+*.mp4
+*.zip
+*.pdf
+*.docx
+*.pptx
+
+# --- Fichiers temporaires / logs / OS ---
+*.log
+Thumbs.db
+.DS_Store

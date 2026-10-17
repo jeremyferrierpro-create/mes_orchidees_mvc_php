@@ -20,6 +20,8 @@
 
 namespace App\Controller;
 
+use App\Exception\CsrfException;
+
 abstract class AbstractController
 {
     /** Racine du dossier des vues (templates/), calculée depuis src/Controller/. */
@@ -190,16 +192,16 @@ abstract class AbstractController
     }
 
     /**
-     * Bloque la requête si le CSRF est invalide (400).
+     * Bloque la requête si le CSRF est invalide (=> 400 via le front-controller).
      *
      * @param array $post Données du formulaire.
      * @return void
+     * @throws CsrfException Si le jeton est absent ou ne correspond pas.
      */
     protected function assertCsrf(array $post): void
     {
         if (!$this->isCsrfTokenValid($post)) {
-            http_response_code(400);
-            throw new \RuntimeException('Jeton CSRF invalide.');
+            throw new CsrfException('Jeton CSRF invalide ou expiré.');
         }
     }
 }

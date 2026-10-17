@@ -89,6 +89,7 @@ use Mithridatem\Routing\Exception\MethodNotAllowedException;
 use Mithridatem\Routing\Exception\UnauthorizedException;
 use Mithridatem\Routing\Exception\RouterException;
 use App\Security\SessionGrantChecker;
+use App\Exception\CsrfException;
 
 $router = new Router();
 $router->setGrantChecker(new SessionGrantChecker());
@@ -153,6 +154,10 @@ try {
         http_response_code(500);
         render_error(500, 'Erreur interne du routeur.');
     }
+} catch (CsrfException $e) {
+    // Erreur CLIENT (jeton CSRF absent/périmé) : 400 propre, jamais 500, même en debug.
+    http_response_code(400);
+    render_error(400, 'Formulaire expiré ou invalide, merci de réessayer.');
 } catch (\Throwable $e) {
     http_response_code(500);
     if ($debug) {

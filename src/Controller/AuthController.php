@@ -118,6 +118,7 @@ class AuthController extends AbstractController
      */
     public function logout(): void
     {
+        $this->assertCsrf($_POST);
         $this->auth->logout();
         $this->redirectTo('/login');
     }
