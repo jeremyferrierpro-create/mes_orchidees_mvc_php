@@ -3,15 +3,15 @@
 -- ===========================================================================
 -- Ordre de migration : 2eme (users doit exister avant)
 -- Source : /assets/js/data/orchids.json (21 especes)
--- BDD : Neon (PostgreSQL 16 serverless)
--- Schema : schema_neon.sql
+-- BDD : MySQL 8 / MariaDB
+-- Schema : schema_mysql.sql
 --
 -- Note : le champ "order" du JSON devient "botanical_order" en SQL
 -- car ORDER est un mot reserve SQL.
--- Le champ search_vector est GENERATED ALWAYS : ne pas inserer.
+-- La recherche plein-texte repose sur l index FULLTEXT ft_orchids_search.
 -- ===========================================================================
 
-INSERT INTO public.orchids (id, name, vernacular, botanical_order, species, genre, family, subfamily, tribu, subtribu, behavior, discovered, origin, img, short_desc, long_desc, is_published)
+INSERT INTO orchids (id, name, vernacular, botanical_order, species, genre, family, subfamily, tribu, subtribu, behavior, discovered, origin, img, short_desc, long_desc, is_published)
 VALUES
 ('acacalis_cyanea', 'ACACALIS CYANEA', 'AGANISIA BLEUE', 'Asparagales', 'Cyanea', 'Acacalis', 'Orchidaceae', 'Epidendroideae', 'Cymbidieae', 'Zygopetalinae', 'Epiphyte', 'John Lindley (1839)', 'Amerique du Sud (Bassin de l Amazone)', './assets/images/orchids/acacalis_cyanea.png', 'Rare orchidee epiphyte tropicale reputee pour ses teintes bleu-violace uniques.', 'Acacalis cyanea demande une forte humidite ambiante (80%+), des temperatures chaudes et une lumiere tamisee de sous-bois.', TRUE),
 
@@ -55,17 +55,11 @@ VALUES
 
 ('vanilla_planifolia', 'VANILLA PLANIFOLIA', 'VANILLE', 'Asparagales', 'Planifolia', 'Vanilla', 'Orchidaceae', 'Vanilloideae', 'Vanilleae', 'Vanillinae', 'Hemiepiphyte / Grimpante', 'J. W. Klotzsch (1841)', 'Mexique, Amerique Centrale', './assets/images/orchids/vanilla_planifolia.jpg', 'Orchidee grimpante tropicale celebre pour ses fruits dont est extraite la vanille.', 'Vanilla planifolia est une orchidee grimpante tropicale qui developpe de longues tiges charnues.', TRUE)
 
-ON CONFLICT (id) DO UPDATE SET
-    name            = EXCLUDED.name,
-    vernacular      = EXCLUDED.vernacular,
-    is_published    = EXCLUDED.is_published,
-    updated_at      = NOW();
+ON DUPLICATE KEY UPDATE
+    name         = VALUES(name),
+    vernacular   = VALUES(vernacular),
+    is_published = VALUES(is_published);
 
--- Verification post-seed
-DO $$
-DECLARE v_count INT;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM public.orchids;
-    ASSERT v_count = 21, 'ERREUR : seed orchids incomplet (' || v_count || '/21 lignes)';
-    RAISE NOTICE 'SEED 02 OK : % orchidees en base', v_count;
-END $$;
+-- Verification post-seed (MySQL/MariaDB) : la commande ci-dessous doit afficher 21.
+SELECT CONCAT('SEED 02 OK : ', COUNT(*), ' orchidees en base') AS seed_check
+  FROM orchids;

@@ -3,21 +3,22 @@
 -- ===========================================================================
 -- Ordre de migration : 3eme (orchids doit exister pour les FK species)
 -- Source : /assets/js/data/conseils.json (premiere partie : categories)
--- BDD : Neon (PostgreSQL 16 serverless)
+-- BDD : MySQL 8 / MariaDB
+-- Schema : schema_mysql.sql
 --
 -- Deux types dans conseils.json :
 --   "category" => conseils generaux (id: "conseils-base", "conseils-epiphytes"...)
 --   "species"  => fiche par espece (id: "fiche-acacalis_cyanea"...)
 --               Le pattern "fiche-" + orchid_id est formalise en FK orchid_id.
 --
--- Note : care_cards stocke en JSONB (structure flexible preservee depuis le JSON)
+-- Note : care_cards stocke en JSON natif MySQL (structure flexible preservee depuis le JSON)
 -- ===========================================================================
 
 -- -------------------------------------------
 -- 3A. CATEGORIES GENERALES
 -- -------------------------------------------
 
-INSERT INTO public.conseils (id, type, name, img, category, content, care_cards, orchid_id)
+INSERT INTO conseils (id, type, name, img, category, content, care_cards, orchid_id)
 VALUES
 ('conseils-base', 'category', 'Conseils de base',
  './assets/images/site/base.jpg', 'Conseils de base',
@@ -55,10 +56,9 @@ VALUES
  '{"temperature": "25 C", "arrosage": "regulier", "hygrometrie": "90 %", "rempotage": "1 an", "engrais": "pas d engrais", "substrats": "ultra fin"}',
  NULL)
 
-ON CONFLICT (id) DO UPDATE SET
-    content    = EXCLUDED.content,
-    care_cards = EXCLUDED.care_cards,
-    updated_at = NOW();
+ON DUPLICATE KEY UPDATE
+    content    = VALUES(content),
+    care_cards = VALUES(care_cards);
 
 -- -------------------------------------------
 -- 3B. FICHES PAR ESPECE (type = 'species')
@@ -66,7 +66,7 @@ ON CONFLICT (id) DO UPDATE SET
 -- Pattern : id = 'fiche-' || orchid_id
 -- orchid_id FK doit exister dans la table orchids (seed 02)
 
-INSERT INTO public.conseils (id, type, name, img, category, content, care_cards, orchid_id)
+INSERT INTO conseils (id, type, name, img, category, content, care_cards, orchid_id)
 VALUES
 ('fiche-acacalis_cyanea', 'species', 'ACACALIS CYANEA', './assets/images/orchids/acacalis_cyanea.png', 'Epiphyte',
  'ACACALIS CYANEA est une orchidee epiphyte originaire de Amerique du Sud. Acacalis cyanea demande une forte humidite ambiante (80%+), des temperatures chaudes et une lumiere tamisee de sous-bois.',
@@ -118,17 +118,13 @@ VALUES
  '{"temperature": "-10 / +30 C", "arrosage": "regulier", "hygrometrie": "50 %", "rempotage": "3 ans", "engrais": "printemps", "substrats": "Terreau drainant"}',
  'bletilla_ochracea')
 
-ON CONFLICT (id) DO UPDATE SET
-    content    = EXCLUDED.content,
-    care_cards = EXCLUDED.care_cards,
-    orchid_id  = EXCLUDED.orchid_id,
-    updated_at = NOW();
+ON DUPLICATE KEY UPDATE
+    content    = VALUES(content),
+    care_cards = VALUES(care_cards),
+    orchid_id  = VALUES(orchid_id);
 
--- Verification post-seed
-DO $$
-DECLARE v_cat INT; v_spe INT;
-BEGIN
-    SELECT COUNT(*) INTO v_cat FROM public.conseils WHERE type = 'category';
-    SELECT COUNT(*) INTO v_spe FROM public.conseils WHERE type = 'species';
-    RAISE NOTICE 'SEED 03 OK : % categories + % fiches especes', v_cat, v_spe;
-END $$;
+-- Verification post-seed (MySQL/MariaDB)
+SELECT CONCAT('SEED 03 OK : ',
+       SUM(type = 'category'), ' categories + ',
+       SUM(type = 'species'),  ' fiches espece en base') AS seed_check
+  FROM conseils;

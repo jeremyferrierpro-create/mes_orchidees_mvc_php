@@ -89,15 +89,18 @@ CREATE TABLE IF NOT EXISTS orchids (
     long_desc       MEDIUMTEXT,
     -- Moderation : orchidee validee par admin ou en attente
     is_published    TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '1 = publiee, 0 = en attente validation',
-    proposed_by     CHAR(36)     REFERENCES users(id) ON DELETE SET NULL,
+    proposed_by     CHAR(36)     NULL COMMENT 'Utilisateur a l origine de la proposition (moderation)',
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_orchids_behavior (behavior),
     KEY idx_orchids_genre    (genre),
+    KEY idx_orchids_published (is_published, proposed_by),
+    -- Cle etrangere explicite au niveau table (MySQL/InnoDB IGNORE le REFERENCES inline colonne)
+    CONSTRAINT fk_orchids_proposed_by FOREIGN KEY (proposed_by) REFERENCES users(id) ON DELETE SET NULL,
     -- FULLTEXT remplace searchOrchids() (includes() JS) et le GIN index Supabase
+    -- Parser par defaut (pas de "WITH PARSER ngram") : portable MySQL 8 + MariaDB.
     FULLTEXT KEY ft_orchids_search (name, vernacular, short_desc, origin)
-        WITH PARSER ngram
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
@@ -188,15 +191,17 @@ CREATE TABLE IF NOT EXISTS conseils (
     -- careCards en JSON natif MySQL 8 : {"temperature":"20°C","arrosage":"regulier",...}
     care_cards  JSON         COMMENT 'Carte de soins flexible. Equivalent du JSONB Supabase.',
     -- Lien optionnel vers l orchidee (pour les fiches species uniquement)
-    orchid_id   VARCHAR(200) REFERENCES orchids(id) ON DELETE SET NULL,
+    orchid_id   VARCHAR(200) NULL COMMENT 'Espece concernee (fiches species uniquement)',
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_conseils_type   (type),
     KEY idx_conseils_orchid (orchid_id),
+    -- Cle etrangere explicite au niveau table (MySQL/InnoDB IGNORE le REFERENCES inline colonne)
+    CONSTRAINT fk_conseils_orchid FOREIGN KEY (orchid_id) REFERENCES orchids(id) ON DELETE SET NULL,
     -- FULLTEXT remplace searchConseils() dans conseil-service.js
+    -- Parser par defaut : portable MySQL 8 + MariaDB.
     FULLTEXT KEY ft_conseils_search (name, content, category)
-        WITH PARSER ngram
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
@@ -267,19 +272,17 @@ JOIN users   u ON u.id = c.user_id
 JOIN orchids o ON o.id = c.orchid_id;
 
 -- ===========================================================================
--- SEED : donnees initiales (depuis users.json — mots de passe haches)
+-- DONNEES INITIALES (SEEDS)
 -- ===========================================================================
--- ATTENTION : remplacer les hash par de vrais hash bcrypt en production.
--- bcrypt("demouser")  => $2y$12$...
--- bcrypt("demoadmin") => $2y$12$...
+-- Le schema ne contient QUE la structure (DDL). Les donnees de demonstration
+-- sont deliees dans data/seeds/, a appliquer dans l ordre :
+--   01_seed_users.sql        (comptes demo, hashs bcrypt password_hash())
+--   02_seed_orchids.sql      (21 especes)
+--   03_seed_conseils.sql     (categories + fiches espece)
+--   04_seed_collections.sql  (collection de demonstration)
+--   05_seed_soins.sql        (historique de soins)
+--   06_seed_notifications.sql(rappels)
+-- Mots de passe demo (test local uniquement) : jeremy.ferrierpro@gmail.com / demoadmin
 -- ===========================================================================
-
-INSERT INTO users (id, nom, prenom, email, password_hash, role, created_at, updated_at) VALUES
-    (UUID(), 'Dupont',  'Jean-Marc', 'admin@mesorchidees.fr',       '$2y$12$HASH_A_REMPLACER_1', 'user',  '2026-01-15 00:00:00', '2026-04-01 00:00:00'),
-    (UUID(), 'FERRIER', 'Jeremy',    'jeremy.ferrierpro@gmail.com', '$2y$12$HASH_A_REMPLACER_2', 'admin', '2026-01-15 00:00:00', '2026-04-01 00:00:00'),
-    (UUID(), 'Martin',  'Jessica',   'jessica.amateur@gmail.com',   '$2y$12$HASH_A_REMPLACER_3', 'user',  '2026-02-03 00:00:00', '2026-05-10 00:00:00')
-ON DUPLICATE KEY UPDATE updated_at = VALUES(updated_at);
 
 SET FOREIGN_KEY_CHECKS = 1;
-
--- Seed orchids, conseils, notifications : voir fichiers seed_orchids_mysql.sql, etc.

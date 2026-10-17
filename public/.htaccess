@@ -1,0 +1,19 @@
+# ---------------------------------------------------------------------------
+# .htaccess du docroot /public (Apache) — route TOUTES les requêtes non
+# fichiers/répertoires vers le front-controller index.php.
+# ---------------------------------------------------------------------------
+Options -Indexes -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Requêtes déjà adressées à index.php : on ne relance pas.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Sécurité : n'expose pas les fichiers cachés.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
