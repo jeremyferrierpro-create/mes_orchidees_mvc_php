@@ -1,0 +1,50 @@
+// ==========================================================================
+// FICHIER : components/_badges.scss — Mes pastilles de statut et de rôle
+// ==========================================================================
+// Deux endroits en ont besoin : la fiche orchidée (une proposition est-elle
+// publiée ?) et le tableau des utilisateurs de l'administration (quel rôle ?).
+// Je reprends la "pilule" dorée de ma charte (border-radius 20px + Cinzel en
+// majuscules), déclinée par état. Le contraste reste RGAA : texte sombre sur
+// fond clair, ou blanc sur fond saturé.
+// ==========================================================================
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: $font-titles;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  // Par défaut : pilule dorée, ma couleur signature
+  background-color: $clr-gold;
+  color: $clr-bg;
+  border: 1px solid transparent;
+
+  // Proposition en attente de modération : orange "attention"
+  &.badge--pending {
+    background-color: rgba(245, 166, 35, 0.18);
+    color: $clr-warning;
+    border-color: $clr-warning;
+  }
+
+  // Rôles du tableau d'administration
+  &.badge--admin {
+    background-color: $clr-gold;
+    color: $clr-bg;
+  }
+
+  &.badge--moderateur {
+    background-color: rgba(79, 195, 247, 0.18);
+    color: $clr-info;
+    border-color: $clr-info;
+  }
+
+  &.badge--user {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: $clr-white;
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+}

@@ -44,7 +44,7 @@ $roles = ['user', 'moderateur', 'admin'];
             <div class="form-field">
                 <label for="password">Mot de passe *</label>
                 <input type="password" id="password" name="password" required autocomplete="new-password">
-                <small>Haché automatiquement (password_hash) — jamais stocké en clair.</small>
+                <small>Le mot de passe est chiffré automatiquement et n'est jamais stocké en clair.</small>
             </div>
         <?php endif; ?>
 

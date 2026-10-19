@@ -1,0 +1,633 @@
+// ==========================================================================
+// FICHIER : pages/_mvc-rappels.scss — La page « Mes rappels de soins » (C0)
+// ==========================================================================
+// Refonte glassmorphism de /rappels et du bandeau rappel de la fiche plante.
+// Je ne crée pas un système parallèle : mêmes tokens (_variables.scss), même
+// Mixin glass-effect que mes cartes d'orchidées, mêmes paliers respond-to.
+// Le global prefers-reduced-motion de base/_reset.scss coupe déjà mes
+// transitions : la signification ne repose jamais sur l'animation, seulement
+// sur les pastilles de statut et les libellés texte.
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Page : conteneur plein largeur comme mes autres vues serveur
+// --------------------------------------------------------------------------
+.rappels-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-xl;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.rappels-intro {
+  font-size: 16px;
+  opacity: 0.92;
+
+  strong {
+    color: $clr-gold;
+    font-family: $font-titles;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Sections « À faire aujourd'hui / En retard / À venir / Historique »
+// --------------------------------------------------------------------------
+.rappel-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: 12px;
+  background-color: rgba(14, 32, 24, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-xs;
+  }
+}
+
+// Le compteur répète le nombre déjà porté par l'intro : décoratif (aria-hidden).
+.rappel-section__count {
+  display: inline-block;
+  min-width: 28px;
+  padding: 2px 10px;
+  box-sizing: border-box;
+  border-radius: 20px;
+  background-color: $clr-gold;
+  color: $clr-bg;
+  font-family: $font-titles;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.rappel-section__grid {
+  display: grid;
+  // Une carte par colonne en petit, deux à trois en grand (auto-fit, comme mes grilles admin)
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: $spacing-md;
+}
+
+// --------------------------------------------------------------------------
+// Carte de rappel en verre givré
+// --------------------------------------------------------------------------
+.rappel-card {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  border-radius: 12px;
+  box-sizing: border-box;
+  @include glass-effect;
+  transition: transform $transition-default, border-color $transition-default;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  // Tons de carte : l'urgence se lit aussi dans la bordure (en plus du badge)
+  &.rappel-card--retard {
+    border-color: rgba($clr-error, 0.55);
+
+    &:hover {
+      border-color: $clr-error;
+    }
+  }
+
+  &.rappel-card--jour {
+    border-color: rgba($clr-gold, 0.55);
+
+    &:hover {
+      border-color: $clr-gold;
+    }
+  }
+
+  @include respond-to('sm') {
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+}
+
+.rappel-card__img {
+  flex-shrink: 0;
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.06);
+
+  @include respond-to('sm') {
+    width: 100%;
+    height: 110px;
+  }
+
+  // Carte sans photo : même empreinte que mes cartes d'orchidées
+  &.rappel-card__img--placeholder {
+    background:
+      radial-gradient(circle at center, rgba(196, 164, 124, 0.25) 0%, rgba(255, 255, 255, 0.04) 70%);
+    border: 1px dashed rgba(196, 164, 124, 0.45);
+  }
+}
+
+.rappel-card__body {
+  flex: 1;
+  min-width: 0; // évite que le texte déborde la grille
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.rappel-card__plante {
+  margin: 0;
+
+  a {
+    font-family: $font-titles;
+    font-size: 17px;
+    font-weight: 600;
+    color: $clr-gold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 3px solid $clr-gold;
+      outline-offset: 3px;
+    }
+  }
+}
+
+.rappel-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-xs;
+  margin: 0;
+}
+
+.rappel-card__frequence {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.rappel-card__message {
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.rappel-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: $spacing-xs;
+
+  .inline-form {
+    display: inline-flex;
+  }
+
+  button:focus-visible {
+    outline: 3px solid $clr-gold;
+    outline-offset: 2px;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Pastilles de rappel (dans la page — les globales restent dans components/badges)
+// --------------------------------------------------------------------------
+.rappel-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: $font-titles;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+
+  // Type de soin attendu : doré discret (identique à la pilule « type » des fiches)
+  &.rappel-badge--soin {
+    background-color: rgba(196, 164, 124, 0.18);
+    color: $clr-gold;
+    border-color: rgba($clr-gold, 0.5);
+  }
+
+  &.rappel-badge--jour {
+    background-color: $clr-gold;
+    color: $clr-bg;
+  }
+
+  &.rappel-badge--retard {
+    background-color: rgba($clr-error, 0.18);
+    color: $clr-error;
+    border-color: $clr-error;
+  }
+
+  &.rappel-badge--avenir {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: $clr-white;
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+
+  &.rappel-badge--traite {
+    background-color: rgba($clr-success, 0.18);
+    color: $clr-success;
+    border-color: $clr-success;
+  }
+
+  &.rappel-badge--ignore {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.65);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Historique : lignes compactes (distinctes de l'historique des soins en fiche)
+// --------------------------------------------------------------------------
+.rappel-histo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rappel-histo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.rappel-histo--ignore {
+    opacity: 0.7;
+  }
+
+  .rappel-histo__plante {
+    font-family: $font-titles;
+    color: $clr-gold;
+    font-size: 14px;
+
+    a {
+      color: inherit;
+
+      &:focus-visible {
+        outline: 3px solid $clr-gold;
+        outline-offset: 3px;
+      }
+    }
+  }
+
+  .rappel-histo__date {
+    font-size: 12px;
+    opacity: 0.75;
+    margin-inline-start: auto;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Bandeau rappel de la fiche plante (show.php) — verre givré compact
+// --------------------------------------------------------------------------
+.rappel-bandeau {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm $spacing-md;
+  padding: $spacing-md;
+  border-radius: 12px;
+  box-sizing: border-box;
+  @include glass-effect;
+
+  // Rappel dû : liseré doré. En retard : rouge. Planifié : neutre.
+  &.rappel-bandeau--actif {
+    border-color: rgba($clr-gold, 0.6);
+  }
+
+  &.rappel-bandeau--vide,
+  &.rappel-bandeau--suspendu {
+    opacity: 0.85;
+  }
+
+  .rappel-bandeau__texte {
+    margin: 0;
+    flex: 1;
+    min-width: 220px;
+    font-size: 14px;
+
+    strong {
+      font-family: $font-titles;
+      color: $clr-gold;
+    }
+  }
+
+  .rappel-bandeau__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Toast persistant du jour J (Phase C1) — rappel de soin dû et non lu.
+// Le module features/rappels-toast.js empile ces toasts dans #toast-container :
+// la base .toast (glass + animation + fermeture) s'applique déjà ; je n'ajoute
+// ici ce qui est propre au rappel : disposition colonne, métadonnées et
+// actions distinctes (« Marquer comme lu » ≠ « × »).
+// --------------------------------------------------------------------------
+.toast-rappel {
+  // Le contenu d'un rappel est plus riche qu'un message flash : colonne.
+  flex-direction: column;
+  align-items: stretch;
+  gap: $spacing-xs;
+  // Ancrage de la fermeture × en tête de carte (position absolue interne).
+  position: relative;
+
+  // Liseré doré « jour J » ; rouge si en retard (mêmes signaux qu'en C0).
+  border-left: 4px solid $clr-gold;
+
+  &.toast-rappel--retard {
+    border-left-color: $clr-error;
+
+    .toast-rappel__icon {
+      color: $clr-error;
+    }
+  }
+
+  .toast-rappel__icon {
+    color: $clr-gold;
+    font-size: 18px;
+    align-self: flex-start;
+  }
+
+  .toast-rappel__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+
+    .toast-rappel__plant {
+      font-family: $font-titles;
+      color: $clr-gold;
+      font-size: 15px;
+    }
+
+    // Métadonnées compactes : type de soin, échéance, message.
+    .toast-rappel__type,
+    .toast-rappel__date {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .toast-rappel__message {
+      font-size: 13px;
+    }
+
+    .toast-rappel__action {
+      color: $clr-gold;
+      font-weight: bold;
+      text-decoration: underline;
+      align-self: flex-start;
+
+      &:hover {
+        color: rgba($clr-gold, 0.8);
+      }
+    }
+  }
+
+  // « Marquer comme lu » : bouton distinct de la fermeture (exigence C1).
+  .toast-rappel__read {
+    background: rgba($clr-gold, 0.15);
+    border: 1px solid $clr-gold;
+    color: $clr-gold;
+    border-radius: 8px;
+    padding: 8px 14px;
+    // Cible tactile minimale (RGAA)
+    min-height: 40px;
+    box-sizing: border-box;
+    font-family: $font-body;
+    font-size: 13px;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background $transition-fast, color $transition-fast;
+
+    &:hover {
+      background: $clr-gold;
+      color: $clr-bg;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+  }
+
+  // La fermeture × reste à droite mais en tête de la carte.
+  .toast-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+  }
+
+  // Navigation clavier : concentration visible sur les actions du rappel.
+  a:focus-visible,
+  button:focus-visible {
+    outline: 3px solid $clr-gold;
+    outline-offset: 2px;
+  }
+}
+
+// ==========================================================================
+// PHASE D — Modale « Gérer mes rappels »
+// ==========================================================================
+// Le voile, la boîte verre et le bouton × viennent du composant global
+// .modal-overlay/.modal-container (components/_modals.scss) : cette section
+// n'ajuste que l'habillage du contenu de rappels dans la fenêtre. Aucun
+// second système de design : cartes, badges et historiques sont ceux de C0.
+.rappels-modal {
+  .modal-container {
+    // Le titre passe au-dessus de la croix × (absolue, 25 px à droite).
+    padding-top: $spacing-lg;
+  }
+
+  &__titre {
+    font-family: $font-titles;
+    font-size: 22px;
+    color: $clr-gold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 48px $spacing-sm 0;
+
+    // Focus reposé par rappels-modal.js après chaque rafraîchissement
+    // (tabindex="-1") : visible pour ne jamais perdre l'utilisateur clavier.
+    &:focus-visible {
+      outline: 3px solid $clr-gold;
+      outline-offset: 2px;
+    }
+  }
+
+  &__bilan {
+    font-family: $font-body;
+    font-size: 14px;
+    color: $clr-white;
+    opacity: 0.9;
+    margin: 0 0 $spacing-md;
+  }
+
+  // Le corps est la zone de défilement interne ; les sections de /rappels y
+  // rentrent telles quelles (grille auto-fit déjà monocolonne en dessous de
+  // ~700 px, donc aucun débordement horizontal sur mobile).
+  &__body {
+    .rappel-section {
+      margin-bottom: $spacing-lg;
+    }
+
+    // Titres de sections un cran plus discrets qu'en page pleine : dans la
+    // fenêtre, c'est le titre de la modale qui hiérarchise.
+    .section-title {
+      font-size: 17px;
+    }
+
+    // Ligne d'historique : dans la fenêtre, la note du rappel clos passe en
+    // deuxième ligne (deux colonnes suffisent sinon à écraser les badges).
+    .rappel-histo {
+      flex-wrap: wrap;
+    }
+
+    .rappel-histo__libelle {
+      flex: 1 1 100%;
+      font-family: $font-body;
+      font-size: 13px;
+      color: $clr-white;
+      opacity: 0.85;
+      order: 2;
+    }
+
+    // Cibles tactiques : la mesure navigateur a relevé 33 px de haut sur les
+    // boutons de carte. 40 px reste cohérent avec les toasts C1 (WCAG 2.5.5).
+    .btn-mini {
+      min-height: 40px;
+    }
+  }
+
+  // Message d'état d'une action (succès confirmé par le serveur, refus CSRF,
+  // session fermée, réseau coupé). Bordure pleine + texte : la couleur n'est
+  // jamais la seule information (WCAG 1.4.1).
+  &__statut {
+    border: 1px solid $clr-white;
+    border-left-width: 4px;
+    border-radius: 8px;
+    background-color: rgba($clr-white, 0.08);
+    color: $clr-white;
+    font-family: $font-body;
+    font-size: 14px;
+    padding: $spacing-sm $spacing-md;
+    margin: 0 0 $spacing-md;
+
+    &--ok {
+      border-color: $clr-success;
+      background-color: rgba($clr-success, 0.14);
+    }
+
+    // Info : le serveur a répondu mais RIEN n'a été écrit (rappel déjà clôturé,
+    // double-frappe). Ni succès vert, ni erreur rouge.
+    &--info {
+      border-color: $clr-gold;
+      background-color: rgba($clr-gold, 0.14);
+    }
+
+    &--ko {
+      border-color: $clr-error;
+      background-color: rgba($clr-error, 0.12);
+    }
+  }
+
+  &__erreur {
+    // État d'erreur explicite : bordure pleine (pas seulement la couleur),
+    // fond translucide, texte plein contraste — WCAG 1.4.1.
+    border: 1px solid $clr-error;
+    border-left-width: 4px;
+    border-radius: 8px;
+    background-color: rgba($clr-error, 0.12);
+    color: $clr-white;
+    font-family: $font-body;
+    font-size: 14px;
+    padding: $spacing-sm $spacing-md;
+    margin: 0 0 $spacing-md;
+
+    a {
+      color: $clr-gold;
+      text-decoration: underline;
+
+      &:focus-visible {
+        outline: 3px solid $clr-gold;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  &__lien {
+    text-align: right;
+    margin: 0;
+
+    a {
+      font-family: $font-body;
+      font-size: 13px;
+      color: $clr-gold;
+      text-decoration: underline;
+
+      &:hover {
+        color: rgba($clr-gold, 0.8);
+      }
+
+      &:focus-visible {
+        outline: 3px solid $clr-gold;
+        outline-offset: 2px;
+      }
+    }
+  }
+}
+
+// Entrée « Gérer mes rappels » du tableau de bord (sous le fil de présentation).
+.collection-rappels-entry {
+  margin: $spacing-sm 0 $spacing-md;
+}
+
+// ==========================================================================
+// PHASE D — Deux corrections mesurées en navigateur réel
+// ==========================================================================
+// 1) Verrou du défilement : core/modal.js pose `overflow: hidden` sur <body>
+//    seul ; or le viewport réel reste <html> (mesure : scrollY atteignait 500
+//    fenêtre ouverte). `:has()` est supporté par les navigateurs cibles du
+//    projet et ne concerne que ma modale — les autres modales gardent le
+//    comportement existant, aucun fichier core n'est modifié.
+// 2) Empilement : les toasts C1 sont en $z-toast (1000), au-dessus du voile
+//    (500) — ils masquaient le bord droit de la fenêtre. Tant que la modale
+//    est ouverte, ils passent sous le voile : le statut des actions est rendu
+//    DANS la fenêtre (__statut), aucun message ne devient invisible.
+html:has(.rappels-modal.active) {
+  overflow: hidden;
+
+  .toast-container {
+    z-index: 480;
+  }
+}

@@ -16,6 +16,17 @@ $pageTitle = $pageTitle ?? ($title ?? 'Mes Orchidées');
 $flashes   = $flashes   ?? [];
 $pageData  = $pageData  ?? [];
 $comp      = __DIR__ . '/components';
+
+// Le voile de noms latins est la signature poétique de l'ACCUEIL uniquement
+// (cf. site statique d'origine : #latin-bg-layer n'existe que dans index.html).
+// On le rend donc conditionnellement, sinon les mots flotteraient sur toutes
+// les pages de travail (encyclopédie, collection, administration).
+$uri        = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$base       = base_path();
+if ($base !== '' && str_starts_with($uri, $base)) {
+    $uri = substr($uri, strlen($base));
+}
+$isHome = ('/' . ltrim($uri, '/')) === '/';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -31,7 +42,9 @@ $comp      = __DIR__ . '/components';
 <?php include $comp . '/header.php'; ?>
 
     <div class="loader" id="loader" aria-hidden="true"></div>
-    <div id="latin-bg-layer" class="latin-bg" aria-hidden="true"></div>
+    <?php if ($isHome): ?>
+        <div id="latin-bg-layer" class="latin-bg" aria-hidden="true"></div>
+    <?php endif; ?>
 
     <main class="main-content" id="main-content" role="main">
         <?php if ($flashes !== []): ?>

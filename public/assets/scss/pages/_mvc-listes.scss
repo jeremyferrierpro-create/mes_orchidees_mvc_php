@@ -1,0 +1,255 @@
+// ==========================================================================
+// FICHIER : pages/_mvc-listes.scss — Mes grilles et listes servies par le serveur
+// ==========================================================================
+// Depuis la migration MVC, les pages « Ma collection », « Modération »,
+// « Conseils » et « Notifications » rendent leurs boucles côté serveur avec
+// leurs propres conteneurs (.collection-grid-container, .notification-list,
+// .moderation-card…). Je réutilise ici la grille .orchid-grid déjà définie pour
+// l'encyclopédie, puis j'habille les éléments de liste et les cartes action.
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Gabarit de page « Ma collection » (/macollection)
+// --------------------------------------------------------------------------
+// Le squelette MVC a longtemps réutilisé la classe héritée .collection-dashboard
+// (pages/_content.scss) qui impose un « grid-template-columns: repeat(3, 1fr) »
+// pensé pour l'ancien tableau de bord JS (stats / climat / notifications).
+// Appliqué au conteneur de page actuel, il éparpillait le titre, l'intro, la
+// grille et le formulaire d'ajout dans 3 colonnes : la page était cassée.
+// Je rends donc une vraie colonne unique recentrée, cohérente avec les autres
+// pages MVC (.moderation-page, .notifications-page).
+.collection-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-xl;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-lg;
+
+  .page-title {
+    text-align: center;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Phrase d'introduction sous un titre de page (collection, admin, modération,
+// notifications) : même rôle que .page-intro de l'encyclopédie d'origine
+// --------------------------------------------------------------------------
+.collection-intro {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-lg;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  font-family: $font-body;
+  font-size: clamp(13px, 2.2vw, 15px);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+// --------------------------------------------------------------------------
+// Grille de mes plantes / de mes propositions
+// --------------------------------------------------------------------------
+.collection-grid-container,
+.conseils-grid-container {
+  // Je reprends exactement le contenant de l'encyclopédie : mêmes gouttières,
+  // mêmes colonnes, pour que mes cartes ne « sautent » pas d'une page à l'autre
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 $spacing-md $spacing-xl;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// Carte d'une plante de ma collection : same as .orchid-card + les actions
+// « modifier / supprimer » qui pendent en bas de carte.
+.collection-card {
+  // Je laisse la carte s'échapper un peu de la grille : les actions demandent
+  // plus d'air qu'une simple carte de catalogue
+  max-width: 280px;
+  gap: $spacing-sm;
+
+  .card-info {
+    // Mes deux lignes d'infos / actions se répartissent la hauteur restante
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    flex: 1;
+  }
+}
+
+// La modération : une carte de proposition avec ses trois boutons d'action
+.moderation-card {
+  max-width: 280px;
+}
+
+.moderation-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-xl;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.moderation-actions {
+  // flex: 1 + align-end : les actions restent en bas de carte, alignées comme
+  // le bouton « SÉLECTIONNER » des cartes du catalogue
+  margin-top: auto;
+  justify-content: center;
+  gap: $spacing-sm;
+}
+
+// --------------------------------------------------------------------------
+// Barre d'actions admin en tête de la page Conseils
+// --------------------------------------------------------------------------
+.conseils-header {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.conseils-admin-bar {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-md;
+  // Filet doré discret : la barre d'admin ne se confond pas avec la grille
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid rgba(196, 164, 124, 0.25);
+}
+
+// Résumé de recherche (« 3 résultats pour … ») sous la barre de recherche
+.search-summary {
+  font-family: $font-body;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+
+  a {
+    color: $clr-gold;
+    text-decoration: underline;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Notifications
+// --------------------------------------------------------------------------
+.notifications-page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto $spacing-xl;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.notification-list {
+  // Flexbox colonne : une notification par ligne, lue de haut en bas
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  border-radius: 10px;
+  background-color: rgba(14, 32, 24, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: border-color $transition-fast;
+
+  &:hover {
+    border-color: $clr-gold;
+  }
+
+  // Non lue : je la signale par un filet doré + fond un peu plus présent,
+  // sans jamais reposer uniquement sur la couleur (RGAA)
+  &.notification-item--unread {
+    border-left: 4px solid $clr-gold;
+    background-color: rgba(196, 164, 124, 0.12);
+    font-weight: 600;
+  }
+
+  @include respond-to('xs') {
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+}
+
+.notification-main {
+  // flex: 1 : le texte prend la place disponible, les actions restent à droite
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  min-width: 0;
+}
+
+.notification-body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.notification-type {
+  font-family: $font-titles;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: $clr-gold;
+}
+
+.notification-orchid {
+  font-family: $font-titles;
+  font-size: 15px;
+  color: $clr-white;
+}
+
+.notification-message {
+  font-family: $font-body;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.88);
+  // Un message long ne casse pas la ligne : je tronque proprement
+  overflow-wrap: break-word;
+}
+
+.notification-date {
+  font-family: $font-body;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+
+  @include respond-to('xs') {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

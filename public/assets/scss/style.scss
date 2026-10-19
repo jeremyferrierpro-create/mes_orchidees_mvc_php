@@ -25,14 +25,24 @@
 @import 'layout/footer';
 
 // 4. Composants réutilisables — mes briques UI avec Glassmorphism
+// Ajouts de la migration MVC : mes formulaires serveur, mes messages flash,
+// mes pastilles de statut / rôle et mon tableau de données.
 @import 'components/buttons';
 @import 'components/search';
 @import 'components/cards';
+@import 'components/fields';
+@import 'components/flash';
+@import 'components/badges';
+@import 'components/tables';
 @import 'components/modals';
 @import 'components/toast';
 @import 'components/loader';
 
 // 5. Pages spécifiques — mes surcharges par page
+// Les partiels « mvc- » couvrent les vues rendues par le serveur (fiches,
+// listes, back-office, pages divers) : l'ossature HTML a été réécrite en
+// Phase 03 avec de nouveaux noms de classes, le design d'origine ne les
+// habillait pas.
 @import 'pages/accueil';
 @import 'pages/encyclopedie';
 @import 'pages/content';
@@ -40,3 +50,8 @@
 @import 'pages/conseils';
 @import 'pages/authentification';
 @import 'pages/admin';
+@import 'pages/fiches';
+@import 'pages/mvc-listes';
+@import 'pages/mvc-admin';
+@import 'pages/mvc-rappels';
+@import 'pages/mvc-divers';

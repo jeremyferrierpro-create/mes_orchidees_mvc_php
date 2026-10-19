@@ -1,0 +1,118 @@
+// ==========================================================================
+// FICHIER : pages/_mvc-divers.scss — Mes pages MVC restantes
+// ==========================================================================
+// Les pages « fourre-tout » du parcours : contenu éditorial (accessibilité,
+// mentions), page d'erreur, appels à l'action de l'accueil, et les deux couches
+// décoratives du layout (le voile des noms latins et le conteneur de loader).
+// Les variantes de fiches (.conseil-detail, .collection-detail,
+// .notification-detail) ne font qu'ajuster la fiche générique de _fiches.scss.
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Page de contenu simple + page d'erreur
+// --------------------------------------------------------------------------
+.content-page {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto $spacing-xl;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  align-items: center;
+  text-align: center;
+
+  p {
+    font-family: $font-body;
+    font-size: 15px;
+    line-height: 1.6;
+    color: $clr-white;
+  }
+}
+
+.error-page {
+  // La page d'erreur (404 / 403 / 500) reste chaleureuse : grand titre doré,
+  // message court, un seul chemin de sortie
+  padding: clamp(30px, 8vh, 80px) $spacing-md;
+
+  .page-title {
+    font-size: clamp(30px, 7vw, 56px);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Accueil : mes deux appels à l'action sous la recherche
+// --------------------------------------------------------------------------
+.hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-md;
+  // z-index 10 : au-dessus de mes mots latins qui flottent en arrière-plan
+  position: relative;
+  z-index: 10;
+
+  @include respond-to('xs') {
+    gap: $spacing-sm;
+
+    a {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// Variantes de fiches servies par le serveur (rappel : l'ossature est dans
+// pages/_fiches.scss, je n'ajuste ici que la largeur et le visuel)
+// --------------------------------------------------------------------------
+.conseil-detail {
+  // Un conseil se lit comme un article : je resserre la largeur de lecture
+  max-width: 900px;
+}
+
+.collection-detail {
+  // La fiche d'une plante de ma collection porte aussi ses notes personnelles
+  max-width: 1000px;
+
+  .detail-orchid-img {
+    // Le visuel de la plante reste modeste : les notes priment
+    max-width: 240px;
+  }
+}
+
+.notification-detail {
+  max-width: 760px;
+}
+
+// --------------------------------------------------------------------------
+// Le voile des noms latins flottants (accueil uniquement)
+// --------------------------------------------------------------------------
+// Le layout ne rend #latin-bg-layer que sur la page d'accueil : c'est la
+// signature poétique de l'accueil, elle ne doit pas polluer les pages de
+// travail (encyclopédie, collection, administration). En l'absence de ce
+// conteneur positionné, mes .latin-word (position: absolute, pages/_accueil.scss)
+// se rapporteraient au <body> et flotteraient sur toute l'application.
+.latin-bg {
+  // position: fixed : le voile suit le scroll, comme mon fond de forêt
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  // Décoratif : jamais cliquable, jamais dans l'ordre de tabulation
+  pointer-events: none;
+  overflow: hidden;
+  // Sous le contenu (z-index 1 dans la hiérarchie du layout), au-dessus du fond
+  z-index: 0;
+}
+
+// --------------------------------------------------------------------------
+// Conteneur de loader du layout
+// --------------------------------------------------------------------------
+// Mon loader global est créé en JS (core/loader.js → .loader-overlay). Le
+// <div id="loader"> hérité du site statique reste dans le layout comme point
+// d'ancrage, mais il ne doit jamais rien afficher ni réserver d'espace.
+.loader {
+  display: none;
+}

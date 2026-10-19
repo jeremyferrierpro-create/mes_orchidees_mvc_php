@@ -23,6 +23,10 @@ import { getElement } from '../core/dom.js';
  * initNavigation();
  */
 export function initNavigation() {
+    // Les confirmations destructrices sont transverses : je les enregistre en
+    // premier, avant toute sortie anticipée (page sans sidebar, erreur 404…).
+    initConfirmDelete();
+
     const sidebar = getElement('#main-sidebar');
     const toggleBtn = getElement('#menu-toggle-btn');
 
@@ -83,6 +87,33 @@ export function initNavigation() {
                 toggleBtn.setAttribute('aria-expanded', 'false');
                 sidebar.setAttribute('aria-hidden', 'true');
             }
+        }
+    });
+}
+
+/**
+ * Je demande une confirmation avant toute action destructrice.
+ *
+ * Les vues serveur marquent leurs formulaires de suppression
+ * class="inline-form js-confirm-delete" data-confirm="…". Sans ce handler,
+ * l'utilisateur supprime en un clic sans filet : je bloque la soumission et
+ * je pose la question rédigée par la vue.
+ *
+ * Je travaille en délégation sur le document : les formulaires rendus plus
+ * tard (ou ailleurs dans l'application) sont couverts sans réenregistrement.
+ * @returns {void}
+ */
+function initConfirmDelete() {
+    document.addEventListener('submit', function (event) {
+        const form = event.target.closest('form.js-confirm-delete');
+        if (!form) {
+            return;
+        }
+
+        const message = form.dataset.confirm || 'Confirmer cette action irréversible ?';
+        if (!window.confirm(message)) {
+            // Annulation : je n'envoie rien et je rends la main au bouton
+            event.preventDefault();
         }
     });
 }

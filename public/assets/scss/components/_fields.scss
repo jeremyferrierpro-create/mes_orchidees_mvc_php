@@ -1,0 +1,279 @@
+// ==========================================================================
+// FICHIER : components/_fields.scss — Mes champs de formulaire (MVC)
+// ==========================================================================
+// Les vues serveur (orchidée, conseil, collection, utilisateur, connexion)
+// écrivent leurs champs en .field ou .form-field, groupés en .form-section
+// (un <fieldset> avec <legend>) et terminés par .form-actions. Mon objectif :
+// le même langage visuel que .form-group de la page d'authentification d'origine
+// (label Cinzel doré en capitales, champ en verre dépoli, focus doré RGAA),
+// étendu aux <select>, <textarea>, cases à cocher et aides contextuelles.
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Conteneurs de formulaire — la "feuille" verre qui porte les sections
+// --------------------------------------------------------------------------
+.orchid-form-wrap,
+.collection-add,
+.collection-edit,
+.care-add,
+.admin-user-form {
+  // Centré comme tout mon contenu, largeur de lecture confortable
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto $spacing-xl;
+  padding: clamp(16px, 3vw, 30px);
+  box-sizing: border-box;
+  @include glass-effect;
+  border-radius: 12px;
+
+  @include respond-to('xs') {
+    padding: $spacing-md;
+    border-radius: 8px;
+  }
+}
+
+.orchid-form,
+.collection-form,
+.conseil-form,
+.admin-user-form form {
+  // Flexbox colonne : je empile mes sections, chacune est un bloc aéré
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// --------------------------------------------------------------------------
+// Section d'un formulaire (fieldset + legend)
+// --------------------------------------------------------------------------
+.form-section {
+  // Je neutralise le style natif du fieldset puis je reprends mes filets
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+
+  legend {
+    // Ma légende devient un titre de section : Cinzel doré + filet en dessous
+    width: 100%;
+    font-family: $font-titles;
+    font-size: clamp(14px, 2.2vw, 17px);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: $clr-gold;
+    padding-bottom: $spacing-sm;
+    margin-bottom: $spacing-xs;
+    border-bottom: 1px solid rgba(196, 164, 124, 0.3);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Un champ : label + contrôle (+ aide optionnelle)
+// --------------------------------------------------------------------------
+.field,
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+
+  >label,
+  >span.label {
+    font-family: $font-titles;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: $clr-gold;
+  }
+
+  // Tous mes types de contrôles : même verre dépoli, même focus doré
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="url"],
+  input[type="search"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    // Fond blanc translucide : mon champ reste lisible sur le verre sombre
+    background-color: rgba(255, 255, 255, 0.08);
+    color: $clr-white;
+    font-family: $font-body;
+    font-size: 14px;
+    transition: border-color $transition-fast, background-color $transition-fast;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    &:focus {
+      // Focus doré bien visible pour le RGAA
+      outline: 2px solid $clr-gold;
+      outline-offset: 2px;
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  // Un textarea garde la main "texte" et ne se déforme pas
+  textarea {
+    min-height: 96px;
+    resize: vertical;
+  }
+
+  // Un <select> natif a besoin d'une couleur de fond pleine pour ses options
+  select {
+    cursor: pointer;
+
+    option {
+      background-color: $clr-bg;
+      color: $clr-white;
+    }
+  }
+
+  // Les champs date subissent le calendrier natif sombre : je le rends clair
+  input[type="date"] {
+    color-scheme: dark;
+  }
+}
+
+// L'aide contextuelle sous un champ (<small class="field-help">)
+.field-help {
+  font-family: $font-body;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+// --------------------------------------------------------------------------
+// Champ d'upload d'image (<input type="file">) — même verre dépoli que les champs
+// --------------------------------------------------------------------------
+.form-file {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: $clr-white;
+  font-family: $font-body;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color $transition-fast, background-color $transition-fast;
+
+  &:focus {
+    outline: 2px solid $clr-gold;
+    outline-offset: 2px;
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  // Le bouton natif « Choisir un fichier » reprend l'accent doré du thème
+  &::file-selector-button {
+    font-family: $font-titles;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: $clr-bg;
+    background-color: $clr-gold;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin-right: $spacing-md;
+    cursor: pointer;
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: #d4b578;
+    }
+  }
+}
+
+// Introduction d'une section d'ajout (collection) : phrasé discret, aligné à gauche
+.collection-add__hint {
+  max-width: 60ch;
+}
+
+// Cas particulier : la case à cocher (publier / soin déjà fait) se met en ligne
+.form-field--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-sm;
+
+  >label {
+    // Le label suit la case, en casse normale : c'est une phrase, pas un titre
+    font-family: $font-body;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: $clr-white;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: $clr-gold;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Rangées d'actions et formulaires "en ligne"
+// --------------------------------------------------------------------------
+.form-actions {
+  // Flexbox ligne : mes boutons se regroupent, et se replient sur mobile
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+
+  @include respond-to('xs') {
+    gap: $spacing-sm;
+  }
+}
+
+// Un <form class="inline-form"> ne doit pas casser l'alignement d'une rangée
+// de boutons (modération, notifications, suppression de soin).
+.inline-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+// Idem pour le formulaire de déconnexion installé dans un <li> du menu latéral.
+.logout-form {
+  display: block;
+  margin: 0;
+}
+
+// Un lien qui doit se comporter comme un bouton (déconnexion de la sidebar)
+.link-as-button {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: none;
+  border: none;
+  padding: 0;
+  // Je reprends exactement le style des liens du menu : le bouton "déconnexion"
+  // n'est pas une action principale, il doit rester un lien de navigation.
+  font-family: $font-titles;
+  font-size: 16px;
+  color: $clr-white;
+  cursor: pointer;
+  transition: color $transition-fast;
+
+  i {
+    color: $clr-gold;
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+  }
+
+  &:hover {
+    color: $clr-gold;
+  }
+}

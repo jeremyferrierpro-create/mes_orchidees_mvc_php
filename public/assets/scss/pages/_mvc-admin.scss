@@ -1,0 +1,91 @@
+// ==========================================================================
+// FICHIER : pages/_mvc-admin.scss — Mon back-office rendu par le serveur
+// ==========================================================================
+// Le tableau de bord d'administration (stats + sections) et la page de gestion
+// des comptes. Je garde ma charte : conteneur plein largeur max 1200px, tuiles
+// de statistiques en CSS Grid auto-fit, sections en verre givré.
+// ==========================================================================
+
+.admin-dashboard,
+.admin-users {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-xl;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// --------------------------------------------------------------------------
+// Tuiles de statistiques
+// --------------------------------------------------------------------------
+.stats-grid {
+  display: grid;
+  // auto-fit : 4 tuiles sur grand écran, 2 sur tablette, 1 sur smartphone
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: $spacing-md;
+}
+
+.stat-card {
+  // La tuile est un lien cliquable : Flexbox colonne centrée pour le nombre
+  // au-dessus du libellé, et élévation au survol comme mes cartes d'orchidées
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-lg $spacing-md;
+  border-radius: 12px;
+  @include glass-effect;
+  transition: transform $transition-default, border-color $transition-default;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: $clr-gold;
+  }
+
+  &:focus-visible {
+    // Le contraste du focus reste celui de ma charte (doré, 3px)
+    outline: 3px solid $clr-gold;
+    outline-offset: 3px;
+  }
+}
+
+.stat-value {
+  font-family: $font-titles;
+  // Le nombre doit se lire d'un coup d'œil : grand et doré
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 600;
+  line-height: 1;
+  color: $clr-gold;
+}
+
+.stat-label {
+  font-family: $font-body;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+// --------------------------------------------------------------------------
+// Sections du tableau de bord
+// --------------------------------------------------------------------------
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: 12px;
+  background-color: rgba(14, 32, 24, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .section-title {
+    margin-bottom: $spacing-xs;
+  }
+}

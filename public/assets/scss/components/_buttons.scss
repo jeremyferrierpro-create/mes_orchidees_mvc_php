@@ -12,6 +12,10 @@
     background: transparent;
     border: none;
     padding: 10px;
+    // Cible tactile WCAG 2.5.5 / RGAA : au moins 44×44 px, même si les barres
+    // du hamburger ne font que 25 px de large.
+    min-width: 44px;
+    min-height: 44px;
     // Flexbox centrée : je centre la barre au milieu du bouton
     display: flex;
     align-items: center;
@@ -55,6 +59,9 @@
     color: $clr-bg;
     border: none;
     padding: 10px 25px;
+    // Cible tactile d'au moins 44 px de haut (RGAA 2.5.5)
+    min-height: 44px;
+    box-sizing: border-box;
     // border-radius 50px : je veux la forme "pilule" signature de mon UI
     border-radius: 50px;
     font-family: $font-titles;
@@ -67,17 +74,29 @@
 }
 
 // Bouton générique — je l'utilise pour connexion, déconnexion, validation
-.btn {
+//
+// IMPORTANT depuis la migration MVC : les vues serveur écrivent simplement
+// class="btn-primary" ou class="btn-danger" (sans la classe socle .btn). Je
+// fais donc porter le socle commun à toutes mes variantes via un placeholder
+// %btn-base : un bouton reste un bouton, qu'il soit écrit .btn .btn-primary
+// (pages statiques d'origine) ou .btn-primary seul (vues MVC).
+%btn-base {
     display: inline-block;
-    padding: 12px 28px;
-    border: none;
+    // box-sizing: border-box + bordure transparente de 2px : c'est LA correction
+    // qui aligne les hauteurs. Sans elle, .btn-primary (border: none) mesurait
+    // 43 px alors que .btn-secondary (border: 2px solid) en mesurait 47 px : deux
+    // boutons côte à côte n'étaient jamais de la même taille.
+    box-sizing: border-box;
+    padding: 10px 26px;
+    border: 2px solid transparent;
     border-radius: 50px;
     font-family: $font-titles;
     font-size: 14px;
     font-weight: 600;
+    line-height: 1.4;
     text-decoration: none;
     cursor: pointer;
-    transition: opacity 0.3s ease, transform 0.2s ease;
+    transition: opacity 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
     text-align: center;
 
     &:hover:not(:disabled) {
@@ -92,7 +111,51 @@
     }
 }
 
+.btn {
+    @extend %btn-base;
+}
+
 .btn-primary {
+    @extend %btn-base;
     background-color: $clr-gold;
     color: $clr-bg;
+}
+
+// Ma variante secondaire : le même pilule en contour doré sur fond transparent
+.btn-secondary {
+    @extend %btn-base;
+    background-color: transparent;
+    border: 2px solid $clr-gold;
+    color: $clr-gold;
+
+    &:hover {
+        // Je remplis légèrement la pilule au survol pour marquer le changement
+        background-color: rgba(196, 164, 124, 0.15);
+    }
+}
+
+// Ma variante destructive (suppression, refus d'une proposition)
+.btn-danger {
+    @extend %btn-base;
+    // Fond rouge sombre (contraste blanc/rouge > 4,5:1 = RGAA AA) : l'ancien
+    // #ff2a2a ne passait qu'à 3,6:1 et restait illisible pour une partie des
+    // utilisateurs. Le rouge vif est gardé pour le survol, où le contraste
+    // n'est plus le même enjeu car l'utilisateur vise déjà la cible.
+    background-color: #b00020;
+    border-color: #b00020;
+    color: $clr-white;
+
+    &:hover {
+        background-color: #d3132f;
+        border-color: #d3132f;
+        opacity: 1;
+    }
+}
+
+// Format compact : mes actions de liste et d'inline (cartes de modération,
+// lignes de tableau, éléments de collection). Je reprends le socle en plus petit.
+.btn-mini {
+    @extend %btn-base;
+    padding: 6px 16px;
+    font-size: 12px;
 }

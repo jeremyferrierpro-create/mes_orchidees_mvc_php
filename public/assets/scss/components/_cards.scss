@@ -63,10 +63,14 @@
 
     .vernacular-name {
       font-family: $font-body;
-      font-size: 9px;
+      // 9 px était illisible : je remonte à 11 px (minimum soutenable pour une
+      // capitale espacée) sans casser l'alignement des cartes.
+      font-size: 11px;
       opacity: 0.8;
       margin: 0;
       text-transform: uppercase;
+      text-align: center;
+      letter-spacing: 0.5px;
     }
 
     .short-desc {
@@ -78,6 +82,7 @@
       // Je coupe proprement à 4 lignes avec ellipsis : pas de carte à hauteur variable
       display: -webkit-box;
       -webkit-line-clamp: 4;
+      line-clamp: 4; // propriété standard (compatibilité au-delà de WebKit)
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -86,10 +91,13 @@
       background-color: #c4a47c;
       color: #0e2018;
       border: none;
-      padding: 5px 18px;
+      padding: 8px 18px;
+      // Cible tactile minimale (RGAA 2.5.5)
+      min-height: 40px;
+      box-sizing: border-box;
       border-radius: 20px;
       font-family: $font-titles;
-      font-size: 9px;
+      font-size: 11px;
       font-weight: bold;
       cursor: pointer;
       letter-spacing: 0.5px;
@@ -100,4 +108,118 @@
       }
     }
   }
+
+  // Carte sans photo : je garde l'empreinte de l'image pour que la grille
+  // reste alignée (vues MVC : proposition sans img, collection sans visuel).
+  .card-img--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // Le fond en dégradé doré très discret suggère « visuel indisponible »
+    background:
+      radial-gradient(circle at center, rgba(196, 164, 124, 0.25) 0%, rgba(255, 255, 255, 0.04) 70%);
+    border: 1px dashed rgba(196, 164, 124, 0.45);
+    border-radius: 8px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PANNEAU GÉNÉRIQUE « .card » — ma feuille de verre réutilisable
+// ---------------------------------------------------------------------------
+// Les vues serveur (mentions légales, accessibilité, confidentialité,
+// connexion / inscription, page « en construction », détail d'une notification)
+// posent leur contenu dans une .card. Je lui donne le même verre givré que mes
+// cartes d'orchidées, avec une largeur de lecture et une typographie cohérentes.
+.card {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto $spacing-xl;
+  padding: clamp(18px, 3vw, 30px);
+  box-sizing: border-box;
+  border-radius: 12px;
+  @include glass-effect;
+
+  h1 {
+    font-family: $font-titles;
+    // Titre fluide : 22px sur mobile, 30px sur grand écran
+    font-size: clamp(22px, 4vw, 30px);
+    letter-spacing: 2px;
+    color: $clr-gold;
+    text-align: center;
+    margin-bottom: $spacing-lg;
+  }
+
+  h2 {
+    font-family: $font-titles;
+    font-size: clamp(16px, 2.6vw, 20px);
+    color: $clr-gold;
+    margin: $spacing-lg 0 $spacing-sm;
+  }
+
+  p,
+  li {
+    font-family: $font-body;
+    font-size: 14px;
+    line-height: 1.6;
+    color: $clr-white;
+    margin-bottom: $spacing-sm;
+  }
+
+  ul {
+    // Mes listes de texte gardent une puce dorée (le reset retire list-style)
+    list-style: disc;
+    padding-left: $spacing-lg;
+
+    li {
+      margin-bottom: $spacing-xs;
+    }
+  }
+
+  a:not([class]) {
+    // Lien de prose : souligné + doré, pour ne pas reposer que sur la couleur
+    color: $clr-gold;
+    text-decoration: underline;
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+
+  // Le formulaire de connexion / inscription reste compact et centré
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  button[type="submit"] {
+    // Un bouton d'authentification est une action principale : format pilule
+    align-self: stretch;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 50px;
+    font-family: $font-titles;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: $clr-gold;
+    color: $clr-bg;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+
+    &:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+  }
+
+  @include respond-to('xs') {
+    padding: $spacing-md;
+    border-radius: 8px;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+// Variante étroite : mes formulaires de compte (jamais plus larges qu'un ticket)
+.card--narrow {
+  max-width: 440px;
 }

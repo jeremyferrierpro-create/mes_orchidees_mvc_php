@@ -5,9 +5,9 @@
  * @var string $csrf Jeton CSRF injecté par le contrôleur.
  */
 ?>
-<section class="card" style="max-width:420px;margin:0 auto;">
+<section class="card card--narrow" aria-label="Formulaire de connexion">
     <h1>Connexion</h1>
-    <form method="post" action="/login">
+    <form method="post" action="<?= e(url('/login')) ?>">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf ?? '', ENT_QUOTES, 'UTF-8') ?>">
         <div class="field">
             <label for="email">Adresse email</label>
@@ -19,5 +19,5 @@
         </div>
         <button type="submit">Se connecter</button>
     </form>
-    <p>Pas encore de compte ? <a href="/register">Inscrivez-vous</a>.</p>
+    <p>Pas encore de compte ? <a href="<?= e(url('/register')) ?>">Inscrivez-vous</a>.</p>
 </section>

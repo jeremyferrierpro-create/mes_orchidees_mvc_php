@@ -4,20 +4,25 @@
 // en mettant en cache les ressources principales.
 
 // Nom du cache : on l'incrémente à chaque mise à jour majeure
-const CACHE_NAME = 'mes-orchidees-v6';
+// v7 : le projet est passé en MVC (front controller public/index.php + routes
+// sans extension .php). L'ancienne liste pointait vers ./encyclopedie.php etc.,
+// qui répondent 404 aujourd'hui : cache.addAll() rejetait donc EN BLOC, le
+// cache initial restait vide et le mode hors-ligne ne fonctionnait plus.
+const CACHE_NAME = 'mes-orchidees-v7';
 
-// Liste des fichiers à mettre en cache pour le mode hors-ligne
+// Liste des fichiers à mettre en cache pour le mode hors-ligne.
+// Je ne mets EN CACHE AUCUNE page privée (macollection, administration,
+// modération, notifications) : elles dépendent de la session et leurs données
+// personnelles n'ont rien à faire dans un cache partagé par le navigateur.
 const CACHE_ASSETS = [
     './',
-    './index.php',
-    './encyclopedie.php',
-    './macollection.php',
-    './conseils.php',
-    './authentification.php',
-    './deconnexion.php',
-    './mentions.php',
-    './confidentialite.php',
-    './accessibilite.php',
+    './encyclopedie',
+    './conseils',
+    './login',
+    './register',
+    './mentions',
+    './confidentialite',
+    './accessibilite',
     './manifest.json',
     './assets/css/style.css',
     './assets/js/pwa.js',
@@ -30,12 +35,6 @@ const CACHE_ASSETS = [
     './assets/js/core/notifications.js',
     './assets/js/core/router.js',
     './assets/js/core/loader.js',
-    './assets/js/data/orchids.json',
-    './assets/js/data/conseils.json',
-    './assets/js/data/collections.json',
-    './assets/js/data/notifications.json',
-    './assets/js/data/soins.json',
-    './assets/js/data/users.json',
     './assets/js/services/auth-service.js',
     './assets/js/services/collection-service.js',
     './assets/js/services/orchid-service.js',
@@ -47,21 +46,27 @@ const CACHE_ASSETS = [
     './assets/js/features/collection.js',
     './assets/js/features/administration.js',
     './assets/js/features/conseils.js',
-    './assets/js/features/authentication.js'
+    './assets/js/features/authentication.js',
+    './assets/images/site/favicon.png',
+    './assets/images/site/logotransparent.webp',
+    './assets/images/site/background.webp',
+    './assets/images/site/orchidee_hero.webp'
 ];
 
 // Événement "install" : on met en cache les ressources
 self.addEventListener('install', function (event) {
-    // On attend que le cache soit rempli avant de terminer l'installation
+    // J'ajoute fichier par fichier au lieu de cache.addAll() : add() n'est pas
+    // atomique, un seul 404 ne doit plus vider tout le cache initial.
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(function (cache) {
-                // On ajoute les fichiers dans le cache
-                return cache.addAll(CACHE_ASSETS);
-            })
-            .catch(function (error) {
-                // En cas d'erreur, on affiche un message
-                console.error('Erreur lors du cache initial :', error);
+                return Promise.all(
+                    CACHE_ASSETS.map(function (url) {
+                        return cache.add(url).catch(function (error) {
+                            console.warn('Ressource non mise en cache (' + url + ') :', error);
+                        });
+                    })
+                );
             })
     );
     // On active immédiatement le nouveau Service Worker
@@ -96,7 +101,7 @@ self.addEventListener('fetch', function (event) {
             .catch(function () { return caches.match(event.request); })
             .then(function (response) {
                 if (response) return response;
-                if (event.request.mode === 'navigate') return caches.match('./index.php');
+                if (event.request.mode === 'navigate') return caches.match('./');
                 return new Response('Ressource non disponible hors-ligne.', {
                     headers: { 'Content-Type': 'text/plain' }
                 });

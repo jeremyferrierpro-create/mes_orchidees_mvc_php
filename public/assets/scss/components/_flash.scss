@@ -1,0 +1,59 @@
+// ==========================================================================
+// FICHIER : components/_flash.scss — Mes messages flash (feedback serveur)
+// ==========================================================================
+// Le layout (templates/layout.php) empile les messages flash en haut de la
+// zone de contenu. Mon objectif : un bandeau verre givré, couleur selon le
+// statut, jamais collé au contenu, et lisible au contraste RGAA (texte blanc
+// ou quasi-blanc sur fond sombre).
+// ==========================================================================
+
+.flash-messages {
+  // Flexbox colonne : un message par ligne, centré comme le reste du contenu
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-lg;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+}
+
+.flash {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+  padding: 12px $spacing-md;
+  border-radius: 10px;
+  font-family: $font-body;
+  font-size: 14px;
+  line-height: 1.4;
+  // Ma charte : bandeau sombre + filet coloré à gauche pour porter le statut
+  background-color: rgba(14, 32, 24, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 4px solid $clr-info;
+  color: $clr-white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+  // 4 statuts émis par les contrôleurs (success / error / warning / info)
+  &.flash--success {
+    border-left-color: $clr-success;
+    background-color: rgba(20, 60, 38, 0.9);
+  }
+
+  &.flash--error {
+    border-left-color: $clr-error;
+    background-color: rgba(70, 20, 24, 0.9);
+  }
+
+  &.flash--warning {
+    border-left-color: $clr-warning;
+    background-color: rgba(70, 50, 18, 0.9);
+  }
+
+  &.flash--info {
+    border-left-color: $clr-info;
+  }
+}

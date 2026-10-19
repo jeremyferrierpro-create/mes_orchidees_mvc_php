@@ -66,7 +66,7 @@ $textarea = function (string $name, string $label, ?string $value): string {
             <?= $field('behavior', 'Comportement (épiphyte, terrestre…)', $orchid->behavior) ?>
             <?= $field('discovered', 'Découverte par', $orchid->discovered) ?>
             <?= $field('origin', 'Origine géographique', $orchid->origin) ?>
-            <?= $field('img', 'Chemin de l\'image', $orchid->img, ['placeholder' => 'assets/images/orchids/xxx.webp', 'help' => 'Chemin relatif servi depuis /public.']) ?>
+            <?= $field('img', 'Chemin de l\'image', $orchid->img, ['placeholder' => 'assets/images/orchids/xxx.webp', 'help' => 'Chemin de l\'image, relatif à la racine du site.']) ?>
         </fieldset>
 
         <fieldset class="form-section">

@@ -91,22 +91,31 @@ export function initBackgroundAnimation() {
 
         container.appendChild(span);
 
-        // Je déclenche l'apparition avec un léger délai pour laisser le temps au
-        // navigateur d'appliquer la transition CSS (opacity 0 -> 1).
-        setTimeout(() => {
-            span.classList.add('word-visible');
-        }, 50);
+        // Anti-troncature : un binôme long (ex. « Rhynchostylis gigantea ») placé
+        // dans la colonne de droite dépassait les 100vw du conteneur et se faisait
+        // couper par l'overflow: hidden — on avait l'impression que le mot
+        // « apparaissait puis disparaissait ». Je mesure la largeur réelle rendue
+        // et je ramène le mot dans le cadre si son bord droit déborde.
+        // Le conteneur fait 100vw (ascenseur inclus) : je me cale donc sur la
+        // largeur VISIBLE (documentElement.clientWidth) pour qu'aucun glyphe ne
+        // passe sous l'ascenseur vertical.
+        const bordDroitVisible = document.documentElement.clientWidth || container.getBoundingClientRect().right;
+        const depassement = span.getBoundingClientRect().right - bordDroitVisible;
+        if (depassement > 0) {
+            const nouveauGauche = parseFloat(span.style.left) - (depassement / bordDroitVisible) * 100 - 1;
+            span.style.left = Math.max(1, nouveauGauche) + '%';
+        }
 
-        // Après 6 secondes d'affichage, je lance la disparition puis je supprime
-        // le nœud du DOM pour ne pas accumuler des dizaines de span invisibles.
+        // L'apparition puis la disparition sont portées par l'animation CSS
+        // « fadeInOutUp » (6 s, pages/_accueil.scss) : je n'ai donc aucune classe
+        // à ajouter ni à retirer ici. Un simple délai de 6 s + la marge de
+        // 2,5 s suffit à purger le nœud du DOM pour ne pas accumuler des
+        // dizaines de span invisibles.
         setTimeout(() => {
-            span.classList.remove('word-visible');
-            setTimeout(() => {
-                if (span.parentNode) {
-                    span.parentNode.removeChild(span);
-                }
-            }, 2500);
-        }, 6000);
+            if (span.parentNode) {
+                span.parentNode.removeChild(span);
+            }
+        }, 8500);
     }
 
     // Je lance la création toutes les 1,5s et j'en crée 3 immédiatement pour

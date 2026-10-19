@@ -1,0 +1,283 @@
+// ==========================================================================
+// FICHIER : pages/_fiches.scss — Mes fiches détaillées rendues par le serveur
+// ==========================================================================
+// Quatre vues partagent la même ossature .orchid-detail + .detail-* :
+// la fiche d'une orchidée, la fiche d'un conseil, le détail d'une notification
+// et la fiche d'une plante de ma collection. Mon objectif : une "fiche" lisible
+// en verre givré, image à gauche / titres à droite sur grand écran, empilée sur
+// mobile, avec ma grille de caractéristiques botaniques auto-fit (comme la
+// modale d'origine, mais en pleine page).
+// ==========================================================================
+
+.orchid-detail {
+  // 1200px : la même largeur max que mes autres grandes cartes
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto $spacing-xl;
+  padding: clamp(16px, 3vw, 32px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+  @include glass-effect;
+  border-radius: 12px;
+
+  @include respond-to('xs') {
+    gap: $spacing-lg;
+    padding: $spacing-md;
+    border-radius: 8px;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Fil d'Ariane — revenir là d'où l'on vient, sans ambiguïté
+// --------------------------------------------------------------------------
+.detail-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  font-family: $font-body;
+  font-size: 13px;
+
+  a {
+    color: $clr-gold;
+    text-decoration: underline;
+    transition: opacity $transition-fast;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// En-tête : visuel + bloc de titres
+// --------------------------------------------------------------------------
+.detail-header-block {
+  // Flexbox ligne : image à gauche, textes à droite sur grand écran
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(16px, 3vw, 32px);
+
+  @include respond-to('md') {
+    // Sur tablette et mobile je empile : la fleur prend toute la largeur
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+.detail-orchid-img {
+  // Je borne l'image sans la déformer : object-fit + ombre portée comme l'accueil
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.6));
+  flex-shrink: 0;
+
+  @include respond-to('md') {
+    max-width: 260px;
+  }
+}
+
+.detail-title-group {
+  // flex: 1 : le bloc de titres occupe le reste de la ligne
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  .page-title {
+    // Le nom scientifique de la fiche remplace le titre de page habituel
+    margin-bottom: $spacing-xs;
+  }
+}
+
+// Le nom latin (binôme) et le nom vernaculaire : deux hiérarchies distinctes
+.detail-scientific {
+  font-family: $font-titles;
+  font-size: clamp(13px, 2vw, 15px);
+  font-style: italic;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.detail-vernacular {
+  font-family: $font-body;
+  font-size: clamp(12px, 2vw, 14px);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: $clr-gold;
+}
+
+.detail-label-desc {
+  // Petit label de section, dans la continuité de mes légendes de formulaire
+  font-family: $font-titles;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: $clr-gold;
+  margin-top: $spacing-md;
+  margin-bottom: $spacing-xs;
+}
+
+.detail-short-text {
+  font-family: $font-body;
+  font-size: 14px;
+  line-height: 1.6;
+  color: $clr-white;
+}
+
+// --------------------------------------------------------------------------
+// Grille des caractéristiques botaniques
+// --------------------------------------------------------------------------
+.detail-specs-grid {
+  display: grid;
+  // FORMULE AUTO-FIT : 3 colonnes sur PC, 2 sur tablette, 1 sur smartphone,
+  // sans multiplier les media queries (même principe que ma modale d'origine)
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: $spacing-md;
+}
+
+.spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-md;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  // Une valeur qui occupe toute la largeur (les origines, les textes longs)
+  &.spec-item--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.spec-label {
+  font-family: $font-titles;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: $clr-gold;
+}
+
+.spec-value {
+  font-family: $font-body;
+  font-size: 14px;
+  line-height: 1.4;
+  color: $clr-white;
+  word-break: break-word;
+}
+
+// --------------------------------------------------------------------------
+// Bloc de description longue
+// --------------------------------------------------------------------------
+.detail-description-block {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    font-family: $font-titles;
+    font-size: clamp(16px, 2.6vw, 20px);
+    letter-spacing: 1px;
+    color: $clr-gold;
+  }
+}
+
+.detail-long-desc {
+  font-family: $font-body;
+  font-size: 15px;
+  line-height: 1.7;
+  color: $clr-white;
+  // white-space: pre-line : je respecte les retours à la ligne saisis en base
+  white-space: pre-line;
+}
+
+// --------------------------------------------------------------------------
+// Rangée d'actions de bas de fiche
+// --------------------------------------------------------------------------
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  // Filet de séparation : les actions ne se confondent pas avec le contenu
+  border-top: 1px solid rgba(196, 164, 124, 0.25);
+
+  @include respond-to('xs') {
+    gap: $spacing-sm;
+
+    >* {
+      flex: 1 1 auto;
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// Historique des soins d'une plante (fiche collection)
+// --------------------------------------------------------------------------
+.care-history,
+.care-add {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.care-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.care-item {
+  // Flexbox ligne : date / type / notes / action sur une même ligne
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-md;
+  padding: 12px $spacing-md;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: $font-body;
+  font-size: 14px;
+
+  @include respond-to('sm') {
+    gap: $spacing-sm;
+  }
+}
+
+.care-date {
+  // Date en doré, format court : je la repère immédiatement
+  font-family: $font-titles;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: $clr-gold;
+  white-space: nowrap;
+}
+
+.care-type {
+  // Le type de soin est une étiquette forte
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: $clr-white;
+}
+
+.care-notes {
+  // flex: 1 : les notes prennent la ligne restante et se replient si besoin
+  flex: 1;
+  min-width: 160px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}

@@ -1,0 +1,114 @@
+// ==========================================================================
+// FICHIER : components/_tables.scss — Mon tableau de données (administration)
+// ==========================================================================
+// Le back-office affiche la liste des comptes dans un <table class="data-table">.
+// Mon objectif : un tableau verre givré, en-tête doré, lignes séparées d'un
+// filet discret, survol lisiblable et actions alignées à droite — sans jamais
+// déborder sur mobile (je réduis padding et taille de police).
+// ==========================================================================
+
+.data-table {
+  width: 100%;
+  // border-collapse + border-spacing 0 : pas de double filet entre les cellules
+  border-collapse: collapse;
+  font-family: $font-body;
+  font-size: 14px;
+  color: $clr-white;
+  background-color: rgba(14, 32, 24, 0.5);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  caption {
+    padding: $spacing-sm;
+    font-family: $font-titles;
+    color: $clr-gold;
+    text-align: left;
+  }
+
+  thead {
+    background-color: rgba(196, 164, 124, 0.18);
+
+    th {
+      // Mes en-têtes en Cinzel capitales, comme mes titres de section
+      font-family: $font-titles;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: $clr-gold;
+      text-align: left;
+      padding: 12px $spacing-md;
+      border-bottom: 1px solid rgba(196, 164, 124, 0.35);
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: background-color $transition-fast;
+
+    // Zébrage : je sépare visuellement les lignes paires pour garder l'œil sur
+    // la bonne ligne dans les longues listes de comptes (admin).
+    &:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    // Léger éclaircissement au survol : on suit la ligne du doigt
+    &:hover {
+      background-color: rgba(196, 164, 124, 0.1);
+    }
+  }
+
+  td {
+    padding: 12px $spacing-md;
+    vertical-align: middle;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  @include respond-to('sm') {
+
+    th,
+    td {
+      padding: 10px $spacing-sm;
+      font-size: 13px;
+    }
+  }
+}
+
+// La colonne "Actions" : boutons groupés, alignés à droite, qui ne se
+// dispersent pas sur plusieurs lignes.
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+}
+
+// Petite liste de compteurs (admin : "Comptes par rôle")
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  font-family: $font-body;
+  font-size: 14px;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: $spacing-md;
+    padding: 10px $spacing-md;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  strong {
+    font-family: $font-titles;
+    color: $clr-gold;
+    font-size: 16px;
+  }
+}

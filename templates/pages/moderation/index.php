@@ -18,7 +18,7 @@
 ?>
 <section class="moderation-page">
     <h1 class="page-title">MODÉRATION</h1>
-    <p class="collection-intro"><?= $nbEnAttente ?> proposition(s) en attente de validation.</p>
+    <p class="collection-intro"><?= $nbEnAttente ?> proposition<?= $nbEnAttente > 1 ? 's' : '' ?> en attente de validation.</p>
     <p><a class="btn-secondary" href="<?= e(url('/administration')) ?>">← Retour à l'administration</a></p>
 
     <?php if ($pending === []): ?>
@@ -33,7 +33,10 @@
                         <span class="card-img card-img--placeholder" aria-hidden="true"></span>
                     <?php endif; ?>
                     <div class="card-info">
-                        <h3><?= e($o->scientificName()) ?></h3>
+                        <?php /* Le titre reprend le nom saisi par l'auteur (comme la carte du catalogue) :
+                                  scientificName() ne rend que le genre ici, toutes les propositions
+                                  Cattleya deviendraient indiscernables pour le modérateur. */ ?>
+                        <h3><?= e($o->name) ?></h3>
                         <?php if ($o->vernacular): ?><p class="vernacular-name"><?= e($o->vernacular) ?></p><?php endif; ?>
                         <p class="short-desc"><?= e($o->shortDesc ?? '—') ?></p>
 

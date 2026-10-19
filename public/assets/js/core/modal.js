@@ -135,8 +135,18 @@ export function close(modalElement) {
     // Je restitue le focus sur l'élément qui avait ouvert la modale.
     // C'est crucial pour la continuité de navigation au clavier : l'utilisateur
     // retrouve exactement sa position, il n'est pas renvoyé en haut de page.
+    // preventScroll : mesure navigateur (phase D) — sans cette option, focus()
+    // FAIT défile la page jusqu'au déclencheur et la position de lecture était
+    // perdue à chaque fermeture, ce que le commentaire ci-dessus refuse.
+    // Le contrat de restitution du focus est inchangé, seul le saut de scroll
+    // est supprimé (toutes les modales du site en bénéficient).
     if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-        lastFocusedElement.focus();
+        try {
+            lastFocusedElement.focus({ preventScroll: true });
+        } catch (erreur) {
+            // Navigateur sans support de l'option : comportement d'origine.
+            lastFocusedElement.focus();
+        }
     }
 
     lastFocusedElement = null;

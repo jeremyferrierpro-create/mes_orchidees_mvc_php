@@ -13,6 +13,7 @@
  * @var string $mode
  * @var string $action
  * @var string $csrf
+ * @var \App\Entity\CategorieConseil[] $categories
  */
 $isUpdate = ($mode === 'update');
 $field = function (string $name, string $label, ?string $value, array $opts = []): string {
@@ -22,9 +23,10 @@ $field = function (string $name, string $label, ?string $value, array $opts = []
     $type = $opts['type'] ?? 'text';
     $ph   = isset($opts['placeholder']) ? ' placeholder="' . e($opts['placeholder']) . '"' : '';
     $help = isset($opts['help']) ? '<small class="field-help">' . e($opts['help']) . '</small>' : '';
+    $list = isset($opts['list'])  ? ' list="' . e($opts['list']) . '"' : '';
     return '<div class="form-field">'
         . '<label for="' . $id . '">' . e($label) . '</label>'
-        . '<input type="' . e($type) . '" id="' . $id . '" name="' . $id . '" value="' . $val . '"' . $req . $ph . '>'
+        . '<input type="' . e($type) . '" id="' . $id . '" name="' . $id . '" value="' . $val . '"' . $req . $ph . $list . '>'
         . $help . '</div>';
 };
 $textarea = function (string $name, string $label, ?string $value): string {
@@ -62,7 +64,12 @@ $careLabels = [
                     <option value="species"  <?= $conseil->isSpecies() ? 'selected' : '' ?>>Fiche par espèce</option>
                 </select>
             </div>
-            <?= $field('category', 'Catégorie / libellé', $conseil->category) ?>
+            <?= $field('category', 'Catégorie / libellé', $conseil->category, ['list' => 'liste-categories', 'help' => 'Sélectionnez une catégorie existante ou saisissez un nouveau libellé (le vocabulaire s\'enrichit automatiquement).']) ?>
+            <datalist id="liste-categories">
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?= e($cat->label) ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
             <?php if (!$isUpdate): ?>
                 <?= $field('id', 'Identifiant (slug) — optionnel', null, ['help' => 'Vide = généré automatiquement (fiche-<espece> ou titre).']) ?>
             <?php endif; ?>
@@ -76,7 +83,7 @@ $careLabels = [
         </fieldset>
 
         <fieldset class="form-section">
-            <legend>Carte de soins (care_cards)</legend>
+            <legend>Carte de soins</legend>
             <?php foreach ($careLabels as $key => $label): ?>
                 <?= $field('care_' . $key, $label, $conseil->careCards[$key] ?? null) ?>
             <?php endforeach; ?>

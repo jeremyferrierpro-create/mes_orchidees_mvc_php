@@ -27,13 +27,4 @@
             <button type="submit" class="search-btn">Rechercher</button>
         </form>
     </div>
-
-    <nav class="hero-ctas" aria-label="Accès rapides">
-        <a class="btn-primary" href="<?= e(url('/encyclopedie')) ?>">Explorer l'encyclopédie</a>
-        <?php if (is_logged_in()): ?>
-            <a class="btn-secondary" href="<?= e(url('/macollection')) ?>">Ma collection</a>
-        <?php else: ?>
-            <a class="btn-secondary" href="<?= e(url('/register')) ?>">Créer mon compte</a>
-        <?php endif; ?>
-    </nav>
 </section>
