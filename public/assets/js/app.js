@@ -33,6 +33,8 @@ import { initCollection } from './features/collection.js';
 import { initAdministration } from './features/administration.js';
 import { initConseils } from './features/conseils.js';
 import { initAuthForm } from './features/authentication.js';
+import { initRappelsToast } from './features/rappels-toast.js';
+import { initRappelsModal } from './features/rappels-modal.js';
 
 // J'importe mon petit routeur maison. Il analyse l'URL courante et me renvoie
 // un identifiant simple ("home", "collection", "administration"...).
@@ -46,10 +48,30 @@ import { getCurrentPage } from './core/router.js';
 const featureInitializers = {
     home: () => {},
     encyclopedia: () => {},
-    collection: initCollection,
-    administration: initAdministration,
+
+    // Routes MVC reelles : ce sont des vues rendues cote serveur. Les anciens
+    // modules (initCollection / initAdministration) ciblent le DOM du site
+    // statique d'origine et ne doivent surtout pas tourner ici (ils dereferencent
+    // des elements absents, voire deplacent l'utilisateur). Je les branche donc
+    // sur les initialiseurs MVC dedies — ou du no-op quand la page n'a rien de
+    // specifique — en attendant les modules des prochaines phases.
+    // Phase D : la modale « Gerer mes rappels » vit sur le dashboard et la
+    // fiche plante ; son module se met en no-op tout seul si le squelette
+    // #rappels-modal est absent de la page courante.
+    'collection-dashboard': initRappelsModal,
+    'collection-detail': initRappelsModal,
+    rappels: () => {},
+    'admin-dashboard': () => {},
+
+    // Conseils / authentication : initialiseurs historiques deja proteges (ils
+    // sortent en no-op si leur DOM n'est pas present sur la page serveur).
     conseils: initConseils,
-    authentication: initAuthForm
+    authentication: initAuthForm,
+
+    // Compatibilite avec les anciennes pages statiques *.php (non servies par
+    // l'app MVC, mais reconnues par le routeur si presentes).
+    collection: initCollection,
+    administration: initAdministration
 };
 
 // J'Ã©coute l'Ã©vÃ©nement DOMContentLoaded. Pourquoi cet Ã©vÃ©nement prÃ©cisÃ©ment ?
@@ -64,14 +86,26 @@ document.addEventListener('DOMContentLoaded', () => {
     initBackgroundAnimation();
     initSearch();
     initAddButton();
+
+    // Toast persistant des rappels de soin dus (Phase C1) : transverse, il tourne
+    // sur TOUTES les pages — mais ne fait de réseau que si le footer a rendu
+    // l'amorce #rappels-toast-bootstrap (utilisateur authentifié). async : je
+    // n'attends pas et le module ne lève jamais (try/catch interne).
+    initRappelsToast();
     
     // Ensuite, je ne lance que le module qui correspond Ã  la page actuelle.
     // Pourquoi ce dÃ©coupage ? Pour Ã©viter de charger inutilement le code de la
     // page "Ma Collection" quand je suis sur l'accueil : j'optimise les performances.
     const page = getCurrentPage();
     const initializer = featureInitializers[page];
-    if (initializer) {
-        initializer();
+    if (typeof initializer === 'function') {
+        // Un module qui echoue ne doit jamais empecher le reste de l'app (ni
+        // l'enregistrement du Service Worker) de demarrer : je cloisonne.
+        try {
+            initializer();
+        } catch (error) {
+            console.error('Initialisation de la page « ' + page + ' » impossible :', error);
+        }
     }
     
     // Enfin, j'enregistre le Service Worker pour la conformitÃ© PWA.

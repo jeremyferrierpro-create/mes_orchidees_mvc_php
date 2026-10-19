@@ -24,5 +24,13 @@
     <!-- Conteneur global pour les notifications "Toasts" -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
+    <?php if (is_logged_in()): ?>
+    <!-- Phase C1 : amorce du toast persistant des rappels dus (jour J). Uniquement
+         les URLs de routes réelles (fonction url() : préfixe d'installation respecté) ;
+         aucun jeton CSRF exposé ici — il voyage dans la réponse JSON authentifiée
+         de /api/rappels/dus. Absent = visiteur anonyme = module en no-op. -->
+    <div id="rappels-toast-bootstrap" data-endpoint="<?= e(url('/api/rappels/dus')) ?>" hidden></div>
+    <?php endif; ?>
+
     <!-- Script principal de l'application -->
     <script type="module" src="<?= e(asset('assets/js/app.js')) ?>"></script>

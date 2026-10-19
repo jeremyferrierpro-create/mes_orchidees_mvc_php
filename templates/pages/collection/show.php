@@ -5,6 +5,7 @@
  * Rendue par CollectionController::show(). Variables :
  *  - $item  : App\Entity\Collection (appartient à l'utilisateur connecté — RG1)
  *  - $soins : App\Entity\Soin[]     (historique de soins de cette plante)
+ *  - $prochainRappel : ?App\Entity\Notification (rappel à venir pour cette plante)
  *  - $csrf  : string                (jeton pour tous les formulaires)
  *
  * Trois actions : modifier les conditions de culture, enregistrer un soin,
@@ -14,9 +15,11 @@
  * @package App\Templates\Pages\Collection
  * @var \App\Entity\Collection $item
  * @var \App\Entity\Soin[] $soins
+ * @var \App\Entity\TypeSoin[] $typesSoin
+ * @var \App\Entity\Notification|null $prochainRappel
  * @var string $csrf
  */
-$img = $item->orchidImageUrl();
+$img = $item->displayImageUrl();
 ?>
 <article class="orchid-detail collection-detail">
     <nav class="detail-breadcrumb" aria-label="Fil d'Ariane">
@@ -37,6 +40,49 @@ $img = $item->orchidImageUrl();
             </p>
         </div>
     </header>
+
+    <!-- Bandeau rappel à venir (RG3) — source unique de vérité : collections.rappel_actif
+         (case du formulaire de soin ci-dessous). L'état affiché découle du duo
+         {rappel_actif, prochain rappel ouvert} : aucun second interrupteur. -->
+    <?php if ($prochainRappel !== null): ?>
+        <section class="rappel-bandeau rappel-bandeau--<?= e($prochainRappel->statut) ?>" aria-label="Prochain rappel de soin">
+            <p class="rappel-bandeau__texte">
+                <strong><?= e($prochainRappel->isLate() ? 'Rappel en retard' : ($prochainRappel->statut === 'actif' ? 'Rappel dû aujourd\'hui' : 'Prochain rappel')) ?></strong>
+                <?php if ($prochainRappel->typeSoinLabel !== null): ?>
+                    <span class="rappel-badge rappel-badge--soin"><?= e(ucfirst($prochainRappel->typeSoinLabel)) ?></span>
+                <?php endif; ?>
+                — <?= e($prochainRappel->message) ?>
+            </p>
+            <div class="rappel-bandeau__actions">
+                <?php if ($prochainRappel->statut === 'actif' || $prochainRappel->statut === 'planifie'): ?>
+                    <form method="post" action="<?= e(url('/rappel/' . rawurlencode($prochainRappel->id) . '/fait')) ?>" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                        <button type="submit" class="btn-primary btn-mini">✓ Effectuer le soin</button>
+                    </form>
+                    <form method="post" action="<?= e(url('/rappel/' . rawurlencode($prochainRappel->id) . '/report/7')) ?>" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                        <button type="submit" class="btn-secondary btn-mini">Reporter +7 j</button>
+                    </form>
+                <?php endif; ?>
+                <a class="btn-secondary btn-mini" href="<?= e(url('/rappels')) ?>"
+                   data-rappels-modal-trigger aria-controls="rappels-modal" aria-haspopup="dialog">Gérer mes rappels</a>
+                <a class="btn-link" href="<?= e(url('/rappels')) ?>">Tous mes rappels →</a>
+            </div>
+        </section>
+    <?php else: ?>
+        <section class="rappel-bandeau rappel-bandeau--<?= $item->rappelActif ? 'vide' : 'suspendu' ?>" aria-label="Statut des rappels de cette plante">
+            <p class="rappel-bandeau__texte">
+                <?= $item->rappelActif
+                    ? 'Aucun rappel programmé : enregistrez un soin pour déclencher le prochain rappel (tous les ' . (int) $item->rappelFrequenceJours . ' jours).'
+                    : 'Rappels suspendus pour cette plante. Cochez « Programmer le prochain rappel » dans le formulaire de soin pour les réactiver.' ?>
+            </p>
+            <div class="rappel-bandeau__actions">
+                <a class="btn-secondary btn-mini" href="<?= e(url('/rappels')) ?>"
+                   data-rappels-modal-trigger aria-controls="rappels-modal" aria-haspopup="dialog">Gérer mes rappels</a>
+                <a class="btn-link" href="<?= e(url('/rappels')) ?>">Tous mes rappels →</a>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <!-- Modifier les conditions de culture -->
     <section class="collection-edit" aria-label="Conditions de culture">
@@ -65,6 +111,13 @@ $img = $item->orchidImageUrl();
             <div class="form-field">
                 <label for="ventilation">Ventilation</label>
                 <input type="text" id="ventilation" name="ventilation" value="<?= e($item->ventilation) ?>">
+            </div>
+            <div class="form-field">
+                <label for="rappel_frequence_jours">Fréquence du rappel (jours)</label>
+                <input type="number" id="rappel_frequence_jours" name="rappel_frequence_jours"
+                       min="1" max="365" step="1" value="<?= (int) $item->rappelFrequenceJours ?>"
+                       help="Interval en jours entre chaque soin enregistré et le rappel planifié par RG3.">
+                <small class="help-text">Le rappel est automatiquement replanifié à chaque soin enregistré.</small>
             </div>
             <div class="form-field">
                 <label for="notes">Notes</label>
@@ -113,11 +166,9 @@ $img = $item->orchidImageUrl();
             <div class="form-field">
                 <label for="type">Type de soin *</label>
                 <select id="type" name="type" required>
-                    <option value="arrosage">Arrosage</option>
-                    <option value="engrais">Engrais</option>
-                    <option value="rempotage">Rempotage</option>
-                    <option value="substrat">Changement de substrat</option>
-                    <option value="ravageurs">Traitement ravageurs</option>
+                    <?php foreach ($typesSoin as $t): ?>
+                        <option value="<?= e($t->label) ?>"><?= e(ucfirst($t->label)) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-field">
@@ -128,6 +179,15 @@ $img = $item->orchidImageUrl();
                 <input type="checkbox" id="engrais" name="engrais" value="1"><label for="engrais">Engrais appliqué</label>
                 <input type="checkbox" id="substrat" name="substrat" value="1"><label for="substrat">Substrat renouvelé</label>
                 <input type="checkbox" id="ravageurs" name="ravageurs" value="1"><label for="ravageurs">Ravageurs traités</label>
+            </div>
+            <div class="form-field form-field--checkbox">
+                <!-- Opt-in du rappel (RG3 étendu) : le hidden « 0 » placé avant la
+                     case garantit une valeur toujours présente au POST. Cochée, le « 1 »
+                     suit et gagne (dernière valeur) ; décochée, seul le « 0 » est envoyé. -->
+                <input type="hidden" name="rappel_actif" value="0">
+                <input type="checkbox" id="rappel_actif" name="rappel_actif" value="1"<?= $item->rappelActif ? ' checked' : '' ?>>
+                <label for="rappel_actif">Programmer le prochain rappel (tous les <?= (int) $item->rappelFrequenceJours ?> jours)</label>
+                <small class="help-text">Décochez pour suspendre les rappels de cette plante. Le rappel déjà planifié sera annulé (l'historique reste conservé).</small>
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Enregistrer le soin</button>
@@ -143,4 +203,7 @@ $img = $item->orchidImageUrl();
             <button type="submit" class="btn-danger">Retirer de ma collection</button>
         </form>
     </footer>
+
+    <?php // Modale « Gérer mes rappels » (Phase D) — squelette + fragment chargé à l'ouverture. ?>
+    <?php include dirname(__DIR__, 2) . '/components/rappels_modal.php'; ?>
 </article>
