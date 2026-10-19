@@ -25,7 +25,10 @@ export function initPWA() {
         // J'enregistre le fichier sw.js situé à la racine du projet. C'est lui
         // qui contient la logique de cache (CACHE_NAME, CACHE_ASSETS).
         // Pourquoi à la racine ? Pour que son scope couvre tout le site.
-        navigator.serviceWorker.register('sw.js')
+        // URL ABSOLUE '/sw.js' : en relatif, depuis une route imbriquée
+        // (ex: /collection/{uuid}), le navigateur demandait /collection/{uuid}/sw.js
+        // (404) et l'enregistrement échouait sur toutes les pages de 2e niveau.
+        navigator.serviceWorker.register('/sw.js')
             .then(registration => {
                 // Succès de l'enregistrement du Service Worker
             })

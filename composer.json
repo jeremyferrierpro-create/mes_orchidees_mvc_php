@@ -22,7 +22,7 @@
         "sort-packages": true
     },
     "scripts": {
-        "serve": "php -S localhost:8000 -t public public/index.php",
+        "serve": "php -S localhost:8000 -t public server.php",
         "test": "php tests/run.php",
         "post-autoload-dump": []
     }
