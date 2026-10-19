@@ -33,6 +33,23 @@ class Collection
     public ?string $hygro = null;
     public ?string $light = null;
     public ?string $ventilation = null;
+    /** Photo personnelle uploadée par le propriétaire (distincte de l'image de l'espèce). */
+    public ?string $photo = null;
+    /**
+     * Fréquence personnalisable du rappel de soin (en jours). RG3 étendu :
+     * remplace la constante fixe de 7 jours par un réglage par plante.
+     * Bornée côté contrôleur à [1, 365] pour éviter le non-sens (0 = désactivé non
+     * prévu ici ; l'utilisateur veut un rappel, sinon il n'enregistre pas de soin).
+     */
+    public int $rappelFrequenceJours = 7;
+    /**
+     * Opt-in du rappel automatique (RG3 étendu). `true` (défaut) : un rappel est
+     * programmé à chaque soin enregistré. `false` : l'utilisateur a désactivé les
+     * rappels pour cette plante — aucun nouveau rappel n'est créé et le rappel
+     * éventuellement déjà planifié est annulé (côté contrôleur, sans destruction
+     * de l'historique).
+     */
+    public bool $rappelActif = true;
     public ?string $addedAt = null;
     public ?string $updatedAt = null;
 
@@ -61,6 +78,9 @@ class Collection
         $c->hygro        = $row['hygro'] ?? null;
         $c->light        = $row['light'] ?? null;
         $c->ventilation  = $row['ventilation'] ?? null;
+        $c->photo        = $row['photo'] ?? null;
+        $c->rappelFrequenceJours = (int) ($row['rappel_frequence_jours'] ?? 7);
+        $c->rappelActif    = (bool) ((int) ($row['rappel_actif'] ?? 1) === 1);
         $c->addedAt      = $row['added_at'] ?? null;
         $c->updatedAt    = $row['updated_at'] ?? null;
 
@@ -90,6 +110,34 @@ class Collection
     }
 
     /**
+     * URL de la photo personnelle du propriétaire (réécrite sous /assets via asset()).
+     *
+     * @return string|null
+     */
+    public function photoUrl(): ?string
+    {
+        if ($this->photo === null || $this->photo === '') {
+            return null;
+        }
+        $clean = ltrim($this->photo, './');
+        if (!str_starts_with($clean, 'assets/')) {
+            $clean = 'assets/' . ltrim($this->photo, '/');
+        }
+        return function_exists('asset') ? asset($clean) : '/' . $clean;
+    }
+
+    /**
+     * Image à afficher pour cette entrée : la photo personnelle si elle existe,
+     * sinon l'image de l'espèce jointe.
+     *
+     * @return string|null
+     */
+    public function displayImageUrl(): ?string
+    {
+        return $this->photoUrl() ?? $this->orchidImageUrl();
+    }
+
+    /**
      * Le nom lisible de la plante (nom de l'espèce jointe, sinon l'id d'espèce).
      *
      * @return string
@@ -116,6 +164,9 @@ class Collection
             'hygro'       => $this->hygro,
             'light'       => $this->light,
             'ventilation' => $this->ventilation,
+            'photo'       => $this->photoUrl(),
+            'rappelFrequenceJours' => $this->rappelFrequenceJours,
+            'rappelActif'     => $this->rappelActif,
             'addedAt'     => $this->addedAt,
         ];
     }

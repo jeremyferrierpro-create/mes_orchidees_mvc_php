@@ -35,6 +35,8 @@ class Orchid
     public ?string $shortDesc = null;
     public ?string $longDesc = null;
     public bool $isPublished = true;
+    /** Etat du workflow de modération : 'pending' | 'approved' | 'rejected'. */
+    public string $moderationStatus = 'approved';
     public ?string $proposedBy = null;
 
     /**
@@ -64,6 +66,7 @@ class Orchid
         $o->longDesc       = $row['long_desc']      ?? null;
         // MySQL renvoie 0/1 (TINYINT) ; on normalise en booléen.
         $o->isPublished    = (bool) ($row['is_published'] ?? true);
+        $o->moderationStatus = (string) ($row['moderation_status'] ?? 'approved');
         $o->proposedBy     = $row['proposed_by']    ?? null;
         return $o;
     }

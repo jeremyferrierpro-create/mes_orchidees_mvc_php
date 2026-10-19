@@ -88,20 +88,36 @@ class NotificationController extends AbstractController
     /**
      * POST /notification/{id}/read — Marque la notification comme lue (isolation).
      *
+     * Authentifié (grant), CSRF vérifié (`assertCsrf` → 400 sinon), RG1 :
+     * `markReadForUser` filtre par `user_id` — la notification d'un tiers est
+     * injoignable même en devinant l'UUID. En JSON (toast C1) : 200 {status} ou
+     * 404 {status} ; le jeton CSRF invalide reste renvoyé en 400 par le
+     * front-controller (le client ne doit alors PAS considérer le rappel comme lu).
+     *
      * @param string $id UUID de la notification.
-     * @return void (redirection).
+     * @return string|null Corps JSON si le requérant le préfère, sinon rien (redirection).
      */
-    public function markRead(string $id): void
+    public function markRead(string $id): ?string
     {
         $this->assertCsrf($_POST);
         $uid = $this->currentUserId();
 
-        if ($this->notifications->markReadForUser($id, $uid)) {
+        $ok = $this->notifications->markReadForUser($id, $uid);
+
+        if ($this->prefersJson()) {
+            return $this->json(
+                ['status' => $ok ? 'ok' : 'not_found', 'id' => $id],
+                $ok ? 200 : 404
+            );
+        }
+
+        if ($ok) {
             $this->addFlash('Notification marquée comme lue.', 'success');
         } else {
             $this->addFlash('Notification introuvable.', 'error');
         }
         $this->redirectTo('/notifications');
+        return null; // inatteignable (redirectTo termine la requête)
     }
 
     /**

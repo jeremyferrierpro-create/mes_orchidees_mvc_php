@@ -23,8 +23,13 @@ use PDO;
 
 class ConseilRepository
 {
-    /** Liste des colonnes exposées (alias stable pour l'entité). */
-    private const COLUMNS = 'id, type, name, img, category, content, care_cards, orchid_id';
+    /** Liste des colonnes exposées (alias stable pour l'entité). La catégorie
+     *  arrive par jointure LEFT `categories_conseil` pour préserver le comportement
+     *  historique (`$c->category` peut rester null sur un conseil sans catégorie). */
+    private const SELECT_BASE = 'SELECT c.id, c.type, c.name, c.img, c.content, c.care_cards, c.orchid_id,
+                                       c.id_categorie, cc.label AS category
+                                  FROM conseils c
+                                  LEFT JOIN categories_conseil cc ON cc.id = c.id_categorie';
 
     private ?PDO $db;
 
@@ -51,7 +56,7 @@ class ConseilRepository
     public function findAll(): array
     {
         // type ASC : 'category' < 'species' → les conseils généraux remontent en premier.
-        $sql  = 'SELECT ' . self::COLUMNS . ' FROM conseils ORDER BY type ASC, name ASC';
+        $sql  = self::SELECT_BASE . ' ORDER BY c.type ASC, c.name ASC';
         $rows = $this->pdo()->query($sql)->fetchAll();
         return array_map(fn(array $r) => Conseil::fromRow($r), $rows);
     }
@@ -64,14 +69,18 @@ class ConseilRepository
      */
     public function findByType(string $type): array
     {
-        $sql  = 'SELECT ' . self::COLUMNS . ' FROM conseils WHERE type = :type ORDER BY name ASC';
+        $sql  = self::SELECT_BASE . ' WHERE c.type = :type ORDER BY c.name ASC';
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute([':type' => $type]);
         return array_map(fn(array $r) => Conseil::fromRow($r), $stmt->fetchAll());
     }
 
     /**
-     * Recherche plein-texte (index FULLTEXT) + repli LIKE sur nom / contenu / catégorie.
+     * Recherche plein-texte (index FULLTEXT sur name + content) + repli LIKE.
+     *
+     * Depuis la normalisation `categories_conseil`, la catégorie n'est plus une
+     * colonne indexée en FULLTEXT : le repli LIKE couvre `cc.label` pour préserver
+     * le comportement fonctionnel de l'interface.
      *
      * @param string $query Terme de recherche (min. 2 caractères).
      * @return Conseil[]
@@ -83,13 +92,16 @@ class ConseilRepository
             return [];
         }
 
-        $sql = 'SELECT ' . self::COLUMNS . ',
-                       MATCH(name, content, category) AGAINST(:q IN NATURAL LANGUAGE MODE) AS score
-                  FROM conseils
-                 WHERE MATCH(name, content, category) AGAINST(:q2 IN NATURAL LANGUAGE MODE)
-                    OR name LIKE :like1
-                    OR category LIKE :like2
-                 ORDER BY score DESC, name ASC
+        $sql = 'SELECT c.id, c.type, c.name, c.img, c.content, c.care_cards, c.orchid_id,
+                       c.id_categorie, cc.label AS category,
+                       MATCH(c.name, c.content) AGAINST(:q IN NATURAL LANGUAGE MODE) AS score
+                  FROM conseils c
+                  LEFT JOIN categories_conseil cc ON cc.id = c.id_categorie
+                 WHERE MATCH(c.name, c.content) AGAINST(:q2 IN NATURAL LANGUAGE MODE)
+                    OR c.name LIKE :like1
+                    OR c.content LIKE :like2
+                    OR cc.label LIKE :like3
+                 ORDER BY score DESC, c.name ASC
                  LIMIT 30';
 
         $like = '%' . $query . '%';
@@ -99,6 +111,7 @@ class ConseilRepository
             ':q2'    => $query,
             ':like1' => $like,
             ':like2' => $like,
+            ':like3' => $like,
         ]);
         return array_map(fn(array $r) => Conseil::fromRow($r), $stmt->fetchAll());
     }
@@ -111,7 +124,7 @@ class ConseilRepository
      */
     public function findById(string $id): ?Conseil
     {
-        $stmt = $this->pdo()->prepare('SELECT ' . self::COLUMNS . ' FROM conseils WHERE id = :id LIMIT 1');
+        $stmt = $this->pdo()->prepare(self::SELECT_BASE . ' WHERE c.id = :id LIMIT 1');
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch();
         return $row === false ? null : Conseil::fromRow($row);
@@ -125,8 +138,8 @@ class ConseilRepository
      */
     public function create(Conseil $c): Conseil
     {
-        $sql = 'INSERT INTO conseils (id, type, name, img, category, content, care_cards, orchid_id)
-                VALUES (:id, :type, :name, :img, :category, :content, :care_cards, :orchid_id)';
+        $sql = 'INSERT INTO conseils (id, type, name, img, id_categorie, content, care_cards, orchid_id)
+                VALUES (:id, :type, :name, :img, :id_categorie, :content, :care_cards, :orchid_id)';
         $this->pdo()->prepare($sql)->execute($this->bind($c));
         return $c;
     }
@@ -140,7 +153,7 @@ class ConseilRepository
     public function update(Conseil $c): Conseil
     {
         $sql = 'UPDATE conseils
-                   SET type = :type, name = :name, img = :img, category = :category,
+                   SET type = :type, name = :name, img = :img, id_categorie = :id_categorie,
                        content = :content, care_cards = :care_cards, orchid_id = :orchid_id
                  WHERE id = :id';
         $this->pdo()->prepare($sql)->execute($this->bind($c));
@@ -184,14 +197,14 @@ class ConseilRepository
     private function bind(Conseil $c): array
     {
         return [
-            ':id'         => $c->id,
-            ':type'       => $c->type === 'species' ? 'species' : 'category',
-            ':name'       => $c->name,
-            ':img'        => $c->img,
-            ':category'   => $c->category,
-            ':content'    => $c->content,
-            ':care_cards' => $c->careCards === [] ? null : json_encode($c->careCards, JSON_UNESCAPED_UNICODE),
-            ':orchid_id'  => $c->orchidId,
+            ':id'            => $c->id,
+            ':type'          => $c->type === 'species' ? 'species' : 'category',
+            ':name'          => $c->name,
+            ':img'           => $c->img,
+            ':id_categorie'  => $c->idCategorie,
+            ':content'       => $c->content,
+            ':care_cards'    => $c->careCards === [] ? null : json_encode($c->careCards, JSON_UNESCAPED_UNICODE),
+            ':orchid_id'     => $c->orchidId,
         ];
     }
 }

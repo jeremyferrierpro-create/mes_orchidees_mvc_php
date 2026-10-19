@@ -161,15 +161,43 @@ class UserRepository implements UserRepositoryInterface
      */
     public function emailExists(string $email, ?string $excludeId = null): bool
     {
-        $sql    = 'SELECT 1 FROM users WHERE email = :email LIMIT 1';
+        // La condition d'exclusion doit précéder LIMIT 1 : concaténée APRÈS le LIMIT,
+        // elle produisait une requête invalide (erreur 1064) en mode édition.
+        $sql    = 'SELECT 1 FROM users WHERE email = :email';
         $params = [':email' => $email];
         if ($excludeId !== null) {
             $sql .= ' AND id <> :eid';
             $params[':eid'] = $excludeId;
         }
+        $sql .= ' LIMIT 1';
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Identifiants (UUID) des utilisateurs portant l'un des rôles demandés.
+     *
+     * Sert à notifier les modérateurs/administrateurs lors d'une nouvelle
+     * proposition d'orchidée. Les rôles sont validés par une liste blanche
+     * (aucune valeur client injectée).
+     *
+     * @param string[] $roles Rôles ciblés (ex : ['admin', 'moderateur']).
+     * @return string[] Liste d'UUID (vide si aucun destinataire).
+     */
+    public function findIdsByRole(array $roles): array
+    {
+        $allowed = ['user', 'admin', 'moderateur'];
+        $roles   = array_values(array_intersect($roles, $allowed));
+        if ($roles === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $sql    = "SELECT id FROM users WHERE role IN ($placeholders)";
+        $stmt   = $this->pdo()->prepare($sql);
+        $stmt->execute($roles);
+        return array_map(static fn($r) => (string) $r, $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
     /**

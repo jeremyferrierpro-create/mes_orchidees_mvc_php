@@ -23,7 +23,7 @@ class OrchidRepository
     /** Liste des colonnes exposées (alias stable pour l'entité). */
     private const COLUMNS = 'id, name, vernacular, botanical_order, species, genre, family,
                              subfamily, tribu, subtribu, behavior, discovered, origin, img,
-                             short_desc, long_desc, is_published, proposed_by';
+                             short_desc, long_desc, is_published, moderation_status, proposed_by';
 
     private ?PDO $db;
 
@@ -55,15 +55,17 @@ class OrchidRepository
     }
 
     /**
-     * Orchidées EN ATTENTE de modération (is_published = 0), triées les plus récentes.
+     * Orchidées EN ATTENTE de modération (moderation_status = 'pending'), récentes d'abord.
      *
-     * Réservé au workflow de modération (admin + modérateur).
+     * Réservé au workflow de modération (admin + modérateur). Les fiches refusées
+     * ('rejected') restent en base (acquises au propriétaire) mais ne sont plus
+     * listées ici.
      *
      * @return Orchid[]
      */
     public function findUnpublished(): array
     {
-        $sql  = 'SELECT ' . self::COLUMNS . ' FROM orchids WHERE is_published = 0 ORDER BY created_at DESC, name ASC';
+        $sql  = 'SELECT ' . self::COLUMNS . " FROM orchids WHERE moderation_status = 'pending' ORDER BY created_at DESC, name ASC";
         $rows = $this->pdo()->query($sql)->fetchAll();
         return array_map(fn(array $r) => Orchid::fromRow($r), $rows);
     }
@@ -75,7 +77,7 @@ class OrchidRepository
      */
     public function countUnpublished(): int
     {
-        return (int) $this->pdo()->query('SELECT COUNT(*) FROM orchids WHERE is_published = 0')->fetchColumn();
+        return (int) $this->pdo()->query("SELECT COUNT(*) FROM orchids WHERE moderation_status = 'pending'")->fetchColumn();
     }
 
     /**
@@ -93,7 +95,69 @@ class OrchidRepository
     }
 
     /**
-     * Recherche plein-texte (index FULLTEXT ngram) + repli LIKE sur nom/vernaculaire.
+     * Fixe l'état de modération d'une fiche ('pending' | 'approved' | 'rejected').
+     *
+     * Synchronise `is_published` : seule une fiche « approved » est publiée/visible.
+     * Un refus ('rejected') conserve la ligne (elle reste acquise au propriétaire de
+     * la collection qui l'a proposée) — on ne supprime plus la fiche.
+     *
+     * @param string $id     Slug de l'espèce.
+     * @param string $status Nouvel état.
+     * @return bool True si une ligne a été mise à jour.
+     */
+    public function setModerationStatus(string $id, string $status): bool
+    {
+        $allowed = ['pending', 'approved', 'rejected'];
+        if (!in_array($status, $allowed, true)) {
+            return false;
+        }
+        $stmt = $this->pdo()->prepare('UPDATE orchids SET moderation_status = :status, is_published = :pub WHERE id = :id');
+        $stmt->execute([':status' => $status, ':pub' => $status === 'approved' ? 1 : 0, ':id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Une espèce publiée existe-t-elle pour ce nom (slug) ? Renvoie l'entité ou null.
+     *
+     * Sert à l'ajout libre en collection : détecte une fiche déjà publiée avant d'en
+     * proposer une nouvelle.
+     *
+     * @param string $id Slug candidat.
+     * @return Orchid|null
+     */
+    public function findPublishedBySlug(string $id): ?Orchid
+    {
+        return $this->findById($id, true);
+    }
+
+    /**
+     * Liste triée et dé-dupliquée des valeurs distinctes d'une colonne botanique
+     * (genre / family / behavior), pour alimenter les menus déroulants du formulaire.
+     *
+     * La colonne est validée par une liste blanche : aucune injection possible.
+     *
+     * @param string $column Nom de colonne autorisé ('genre' | 'family' | 'behavior').
+     * @return string[]
+     */
+    public function distinctValues(string $column): array
+    {
+        $allowed = ['genre', 'family', 'behavior'];
+        if (!in_array($column, $allowed, true)) {
+            return [];
+        }
+        $sql = "SELECT DISTINCT `$column` AS v FROM orchids
+                 WHERE `$column` IS NOT NULL AND `$column` <> '' ORDER BY v ASC";
+        $rows = $this->pdo()->query($sql)->fetchAll();
+        return array_map(static fn(array $r) => (string) $r['v'], $rows);
+    }
+
+    /**
+     * Recherche plein-texte (index FULLTEXT) + repli LIKE sur tous les champs textuels.
+     *
+     * Le repli LIKE n'est pas une simple sécurité : sous MariaDB/InnoDB, les lignes
+     * tout juste insérées ne sont pas immédiatement visibles par MATCH ... AGAINST
+     * (cache FTS non vidé). Sans lui, une espèce créée ou approuvée à l'instant
+     * serait introuvable par l'utilisateur.
      *
      * @param string $query Terme de recherche (min. 2 caractères).
      * @return Orchid[]
@@ -111,7 +175,9 @@ class OrchidRepository
                  WHERE is_published = 1
                    AND ( MATCH(name, vernacular, short_desc, origin) AGAINST(:q2 IN NATURAL LANGUAGE MODE)
                          OR name LIKE :like1
-                         OR vernacular LIKE :like2 )
+                         OR vernacular LIKE :like2
+                         OR short_desc LIKE :like3
+                         OR origin LIKE :like4 )
                  ORDER BY score DESC, name ASC
                  LIMIT 30';
 
@@ -122,6 +188,8 @@ class OrchidRepository
             ':q2'    => $query,
             ':like1' => $like,
             ':like2' => $like,
+            ':like3' => $like,
+            ':like4' => $like,
         ]);
         $rows = $stmt->fetchAll();
 
@@ -156,10 +224,10 @@ class OrchidRepository
     {
         $sql = 'INSERT INTO orchids (id, name, vernacular, botanical_order, species, genre, family,
                                      subfamily, tribu, subtribu, behavior, discovered, origin, img,
-                                     short_desc, long_desc, is_published, proposed_by)
+                                     short_desc, long_desc, is_published, moderation_status, proposed_by)
                 VALUES (:id, :name, :vernacular, :botanical_order, :species, :genre, :family,
                         :subfamily, :tribu, :subtribu, :behavior, :discovered, :origin, :img,
-                        :short_desc, :long_desc, :is_published, :proposed_by)';
+                        :short_desc, :long_desc, :is_published, :moderation_status, :proposed_by)';
         $this->pdo()->prepare($sql)->execute($this->bind($o));
         return $o;
     }
@@ -177,7 +245,7 @@ class OrchidRepository
                        species = :species, genre = :genre, family = :family, subfamily = :subfamily,
                        tribu = :tribu, subtribu = :subtribu, behavior = :behavior, discovered = :discovered,
                        origin = :origin, img = :img, short_desc = :short_desc, long_desc = :long_desc,
-                       is_published = :is_published, proposed_by = :proposed_by
+                       is_published = :is_published, moderation_status = :moderation_status, proposed_by = :proposed_by
                  WHERE id = :id';
         $this->pdo()->prepare($sql)->execute($this->bind($o));
         return $o;
@@ -235,6 +303,7 @@ class OrchidRepository
             ':short_desc'     => $o->shortDesc,
             ':long_desc'      => $o->longDesc,
             ':is_published'   => $o->isPublished ? 1 : 0,
+            ':moderation_status' => $o->moderationStatus,
             ':proposed_by'    => $o->proposedBy,
         ];
     }

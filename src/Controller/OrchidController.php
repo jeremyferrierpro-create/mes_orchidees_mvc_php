@@ -114,7 +114,8 @@ class OrchidController extends AbstractController
         $this->assertCsrf($_POST);
 
         $orchid = $this->fromRequest(new Orchid());
-        $orchid->isPublished = true;              // l'admin publie directement
+        $orchid->isPublished      = true;              // l'admin publie directement
+        $orchid->moderationStatus = 'approved';        // fiche validée d'office
         $orchid->proposedBy  = current_user()['id'] ?? null;
 
         if ($this->orchids->exists($orchid->id)) {
@@ -139,7 +140,8 @@ class OrchidController extends AbstractController
         $this->assertCsrf($_POST);
 
         $orchid = $this->fromRequest(new Orchid());
-        $orchid->isPublished = false;             // en attente de validation
+        $orchid->isPublished      = false;             // en attente de validation
+        $orchid->moderationStatus = 'pending';         // placée dans la file de modération
         $orchid->proposedBy  = current_user()['id'] ?? null;
 
         if ($this->orchids->exists($orchid->id)) {
@@ -200,7 +202,11 @@ class OrchidController extends AbstractController
 
         $orchid = $this->fromRequest($current);
         // L'admin peut basculer l'état publié via la case "is_published".
-        $orchid->isPublished = isset($_POST['is_published']);
+        $published = isset($_POST['is_published']);
+        $orchid->isPublished      = $published;
+        // On synchronise l'état de modération avec la publication (une fiche publiée
+        // admin est « approved » ; dépublier la renvoie en « pending »).
+        $orchid->moderationStatus = $published ? 'approved' : 'pending';
 
         $this->orchids->update($orchid);
         $this->addFlash('Orchidée mise à jour.', 'success');

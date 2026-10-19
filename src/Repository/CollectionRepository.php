@@ -26,7 +26,9 @@ class CollectionRepository
 {
     /** Colonnes de collection jointes à l'espèce (alias d'affichage `orchid_*`). */
     private const SELECT_JOINED = 'SELECT c.id, c.legacy_id, c.user_id, c.orchid_id, c.location, c.notes,
-                                          c.temp, c.hygro, c.light, c.ventilation, c.added_at, c.updated_at,
+                                          c.temp, c.hygro, c.light, c.ventilation, c.photo,
+                                          c.rappel_frequence_jours, c.rappel_actif,
+                                          c.added_at, c.updated_at,
                                           o.name AS orchid_name, o.vernacular AS orchid_vernacular, o.img AS orchid_img
                                      FROM collections c
                                      JOIN orchids o ON o.id = c.orchid_id';
@@ -95,8 +97,8 @@ class CollectionRepository
         $id    = $this->uuid();
         $c->id = $id;
 
-        $sql = 'INSERT INTO collections (id, user_id, orchid_id, location, notes, temp, hygro, light, ventilation)
-                VALUES (:id, :user_id, :orchid_id, :location, :notes, :temp, :hygro, :light, :ventilation)';
+        $sql = 'INSERT INTO collections (id, user_id, orchid_id, location, notes, temp, hygro, light, ventilation, photo, rappel_frequence_jours, rappel_actif)
+                VALUES (:id, :user_id, :orchid_id, :location, :notes, :temp, :hygro, :light, :ventilation, :photo, :rappel_frequence_jours, :rappel_actif)';
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute([
             ':id'          => $id,
@@ -108,6 +110,9 @@ class CollectionRepository
             ':hygro'       => $c->hygro,
             ':light'       => $c->light,
             ':ventilation' => $c->ventilation,
+            ':photo'       => $c->photo,
+            ':rappel_frequence_jours' => max(1, (int) $c->rappelFrequenceJours),
+            ':rappel_actif' => $c->rappelActif ? 1 : 0,
         ]);
 
         return $id;
@@ -137,7 +142,9 @@ class CollectionRepository
     {
         $sql = 'UPDATE collections
                    SET orchid_id = :orchid_id, location = :location, notes = :notes,
-                       temp = :temp, hygro = :hygro, light = :light, ventilation = :ventilation
+                       temp = :temp, hygro = :hygro, light = :light, ventilation = :ventilation,
+                       photo = :photo, rappel_frequence_jours = :rappel_frequence_jours,
+                       rappel_actif = :rappel_actif
                  WHERE id = :id AND user_id = :uid';
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute([
@@ -148,9 +155,34 @@ class CollectionRepository
             ':hygro'       => $c->hygro,
             ':light'       => $c->light,
             ':ventilation' => $c->ventilation,
+            ':photo'       => $c->photo,
+            ':rappel_frequence_jours' => max(1, (int) $c->rappelFrequenceJours),
+            ':rappel_actif' => $c->rappelActif ? 1 : 0,
             ':id'          => $c->id,
             ':uid'         => $userId,
         ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Bascule UNIQUEMENT l'opt-in du rappel d'une plante (RG1 : WHERE user_id).
+     *
+     * Methode volontairement ciblee (et non un updateForUser complet) pour que
+     * l'enregistrement d'un soin puisse activer/desactiver le rappel sans toucher
+     * aux autres champs de culture. Ne supprime aucune donnee : seul le drapeau
+     * `rappel_actif` est ecrit.
+     *
+     * @param string $id     UUID de l'entree de collection.
+     * @param string $userId Proprietaire attendu.
+     * @param bool   $actif  Etat souhaite (true = rappels actifs).
+     * @return bool True si la ligne du bon proprietaire a ete modifiee.
+     */
+    public function setRappelActifForUser(string $id, string $userId, bool $actif): bool
+    {
+        $stmt = $this->pdo()->prepare(
+            'UPDATE collections SET rappel_actif = :actif WHERE id = :id AND user_id = :uid'
+        );
+        $stmt->execute([':actif' => $actif ? 1 : 0, ':id' => $id, ':uid' => $userId]);
         return $stmt->rowCount() > 0;
     }
 

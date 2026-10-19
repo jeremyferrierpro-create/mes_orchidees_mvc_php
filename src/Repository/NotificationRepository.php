@@ -13,8 +13,8 @@
  *
  * @package App\Repository
  * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
- * @version 3.0.0
- * @since   2026-10-17
+ * @version 3.1.0
+ * @since   2026-10-18 (C0 : type de soin + images portés par les rappels)
  */
 
 namespace App\Repository;
@@ -24,13 +24,18 @@ use PDO;
 
 class NotificationRepository
 {
-    /** Sélection jointe : notification + plante rattachée (via collection → orchidée). */
+    /** Sélection jointe : notification + plante rattachée (via collection → orchidée)
+     *  + type de soin attendu (C0) + images d'affichage (photo personnelle, espèce). */
     private const SELECT_JOINED = 'SELECT n.id, n.legacy_id, n.user_id, n.collection_id, n.type,
-                                          n.message, n.is_read, n.notif_date, n.created_at,
-                                          o.name AS orchid_name
+                                          n.message, n.is_read, n.statut, n.id_type_soin,
+                                          n.notif_date, n.created_at,
+                                          o.name AS orchid_name, ts.label AS type_soin_label,
+                                          c.photo AS collection_photo, o.img AS orchid_img,
+                                          c.rappel_frequence_jours AS collection_frequence
                                      FROM notifications n
                                      LEFT JOIN collections c ON c.id = n.collection_id
-                                     LEFT JOIN orchids o     ON o.id = c.orchid_id';
+                                     LEFT JOIN orchids o     ON o.id = c.orchid_id
+                                     LEFT JOIN types_soin ts ON ts.id = n.id_type_soin';
 
     private ?PDO $db;
 
@@ -121,6 +126,146 @@ class NotificationRepository
         return $stmt->rowCount() > 0;
     }
 
+    // ------------------------------------------------------------------
+    // RAPPELS DE SOIN — cycle de vie (RG3 étendu)
+    // ------------------------------------------------------------------
+
+    /**
+     * Rappels de l'utilisateur pour les statuts donnés, triés par échéance.
+     *
+     * RG1 : `user_id` est dans le WHERE ; un statut hors liste blanche ('', 'x',
+     * SQL-injecté) est silencieusement ignoré (la méthode accepte un tableau
+     * d'entiers de statut valides).
+     *
+     * @param string   $userId Propriétaire.
+     * @param string[] $statuts Sous-ensemble de `Notification::STATUTS`. Ex : ['planifie','actif']
+     * @param int|null $limit  Optionnel (nombre max de lignes).
+     * @return Notification[]
+     */
+    public function findRappelsForUser(string $userId, array $statuts, ?int $limit = null): array
+    {
+        $statuts = array_values(array_intersect($statuts, Notification::STATUTS));
+        if ($statuts === []) {
+            return [];
+        }
+        $in   = implode(',', array_fill(0, count($statuts), '?'));
+        $sql  = self::SELECT_JOINED
+              . ' WHERE n.user_id = ? AND n.type = \'rappel_soin\' AND n.statut IN (' . $in . ')'
+              . ' ORDER BY n.notif_date ASC';
+        if ($limit !== null && $limit > 0) {
+            $sql .= ' LIMIT ' . (int) $limit;
+        }
+        $stmt = $this->pdo()->prepare($sql);
+        $stmt->execute(array_merge([$userId], $statuts));
+        return array_map(fn(array $r) => Notification::fromRow($r), $stmt->fetchAll());
+    }
+
+    /**
+     * Change le statut d'un rappel (RG1 : WHERE user_id).
+     *
+     * @param string $id     UUID de la notification.
+     * @param string $userId Propriétaire.
+     * @param string $statut Nouveau statut — doit être dans `Notification::STATUTS`.
+     * @return bool True si la ligne a été mise à jour.
+     */
+    public function updateStatutForUser(string $id, string $userId, string $statut): bool
+    {
+        if (!in_array($statut, Notification::STATUTS, true)) {
+            return false;
+        }
+        $stmt = $this->pdo()->prepare('UPDATE notifications SET statut = :statut WHERE id = :id AND user_id = :uid');
+        $stmt->execute([':statut' => $statut, ':id' => $id, ':uid' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Replanifie un rappel à une nouvelle date (et replace le statut en `planifie`).
+     *
+     * @param string $id     UUID.
+     * @param string $userId Propriétaire.
+     * @param string $newDate Date ISO (Y-m-d ou Y-m-d H:i:s).
+     * @return bool
+     */
+    public function rescheduleForUser(string $id, string $userId, string $newDate): bool
+    {
+        $stmt = $this->pdo()->prepare(
+            'UPDATE notifications SET notif_date = :date, statut = \'planifie\'
+             WHERE id = :id AND user_id = :uid'
+        );
+        $stmt->execute([':date' => $newDate, ':id' => $id, ':uid' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Bascule les rappels `planifie` dont la date d'échéance est passée en `actif`.
+     *
+     * Une seule écriture en lot : typiquement appelée une fois par page (dashboard
+     * ou vue « Rappels ») pour rendre visibles les rappels devenus dus.
+     * RG1 : le WHERE cible UNIQUEMENT les rappels de `$userId`, jamais un tiers.
+     *
+     * @param string $userId
+     * @return int Nombre de lignes activées.
+     */
+    public function activateDueReminders(string $userId): int
+    {
+        $stmt = $this->pdo()->prepare(
+            "UPDATE notifications SET statut = 'actif'
+             WHERE user_id = :uid AND type = 'rappel_soin' AND statut = 'planifie' AND notif_date <= NOW()"
+        );
+        $stmt->execute([':uid' => $userId]);
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Le dernier rappel (tous statuts) d'une plante, pour éviter les doublons
+     * quand l'utilisateur enregistre plusieurs soins rapprochés.
+     *
+     * @param string $collectionId
+     * @param string $userId
+     * @return Notification|null
+     */
+    public function findLatestRappelForCollection(string $collectionId, string $userId): ?Notification
+    {
+        $sql  = self::SELECT_JOINED
+              . " WHERE n.user_id = :uid AND n.collection_id = :cid AND n.type = 'rappel_soin'"
+              . ' ORDER BY n.notif_date DESC LIMIT 1';
+        $stmt = $this->pdo()->prepare($sql);
+        $stmt->execute([':uid' => $userId, ':cid' => $collectionId]);
+        $row = $stmt->fetch();
+        return $row === false ? null : Notification::fromRow($row);
+    }
+
+    /**
+     * Met à jour le message et la date d'un rappel existant (utilisé quand un
+     * nouveau soin remplace le précédent plutôt que d'empiler une notification).
+     *
+     * @param Notification $n Entité avec id déjà positionné + message/notifDate/statut à écrire.
+     * @param string       $userId Propriétaire attendu (RG1).
+     * @return bool
+     */
+    public function updateRappelForUser(Notification $n, string $userId): bool
+    {
+        $statut = in_array($n->statut, Notification::STATUTS, true) ? $n->statut : 'planifie';
+        $stmt = $this->pdo()->prepare(
+            'UPDATE notifications SET message = :message, notif_date = :date, statut = :statut,
+                     id_type_soin = :type_soin, is_read = 0
+             WHERE id = :id AND user_id = :uid'
+        );
+        $stmt->execute([
+            ':message'    => $n->message,
+            ':date'       => $n->notifDate ?? date('Y-m-d H:i:s'),
+            ':statut'     => $statut,
+            ':type_soin'  => $n->idTypeSoin,
+            ':id'         => $n->id,
+            ':uid'        => $userId,
+        ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    // ------------------------------------------------------------------
+    // AIDE PRIVÉE
+    // ------------------------------------------------------------------
+
     /**
      * Insère une notification. L'`id` est généré en PHP (UUID v4).
      *
@@ -137,9 +282,10 @@ class NotificationRepository
         $n->id = $id;
 
         $notifDate = $n->notifDate ?? date('Y-m-d H:i:s');
+        $statut    = in_array($n->statut, Notification::STATUTS, true) ? $n->statut : 'actif';
 
-        $sql = 'INSERT INTO notifications (id, user_id, collection_id, type, message, is_read, notif_date)
-                VALUES (:id, :user_id, :collection_id, :type, :message, :is_read, :notif_date)';
+        $sql = 'INSERT INTO notifications (id, user_id, collection_id, type, message, is_read, statut, id_type_soin, notif_date)
+                VALUES (:id, :user_id, :collection_id, :type, :message, :is_read, :statut, :id_type_soin, :notif_date)';
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute([
             ':id'            => $id,
@@ -148,6 +294,8 @@ class NotificationRepository
             ':type'          => in_array($n->type, Notification::TYPES, true) ? $n->type : 'info',
             ':message'       => $n->message,
             ':is_read'       => $n->isRead ? 1 : 0,
+            ':statut'        => $statut,
+            ':id_type_soin'  => $n->idTypeSoin,
             ':notif_date'    => $notifDate,
         ]);
 

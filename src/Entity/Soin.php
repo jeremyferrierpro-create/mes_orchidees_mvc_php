@@ -23,7 +23,10 @@ class Soin
     public string $collectionId = '';
     /** @var string Date au format MySQL 'YYYY-MM-DD'. */
     public string $soinDate = '';
-    public string $type = 'arrosage';
+    /** FK vers `types_soin.id` — vocabulaire fermé des 5 types de soin. */
+    public int $idTypeSoin = 1;
+    /** Label transitoire (jointure `types_soin`, lecture seule). */
+    public ?string $typeLabel = null;
     public ?string $notes = null;
     public bool $engrais = false;
     public bool $substrat = false;
@@ -47,7 +50,9 @@ class Soin
         $s->collectionId = (string) ($row['collection_id'] ?? '');
         // soin_date peut arriver en string 'YYYY-MM-DD' (DATE) ; on normalise.
         $s->soinDate     = (string) ($row['soin_date'] ?? '');
-        $s->type         = (string) ($row['type'] ?? 'arrosage');
+        $s->idTypeSoin   = (int) ($row['id_type_soin'] ?? 1);
+        // Jointure `types_soin.label` exposée sous le alias `type_label` par SoinRepository.
+        $s->typeLabel    = $row['type_label'] ?? null;
         $s->notes        = $row['notes'] ?? null;
         // TINYINT(1) → 0/1 : normalisation en booléen.
         $s->engrais      = (bool) ($row['engrais'] ?? false);
@@ -61,20 +66,14 @@ class Soin
     }
 
     /**
-     * Le type lisible du soin (borne le champ libre à une valeur connue pour l'affichage).
+     * Le label lisible du soin, résolu par jointure avec `types_soin`.
+     * Repli défensif sur « arrosage » si la jointure n'a pas été fournie.
      *
      * @return string
      */
     public function typeLabel(): string
     {
-        return match ($this->type) {
-            'arrosage'  => 'Arrosage',
-            'engrais'   => 'Engrais',
-            'rempotage' => 'Rempotage',
-            'substrat'  => 'Substrat',
-            'ravageurs' => 'Ravageurs',
-            default     => ucfirst($this->type),
-        };
+        return $this->typeLabel ?? 'arrosage';
     }
 
     /**
@@ -89,7 +88,8 @@ class Soin
             'collectionId' => $this->collectionId,
             'orchidName'   => $this->orchidName,
             'soinDate'     => $this->soinDate,
-            'type'         => $this->type,
+            'type'         => $this->typeLabel(),
+            'idTypeSoin'   => $this->idTypeSoin,
             'notes'        => $this->notes,
             'engrais'      => $this->engrais,
             'substrat'     => $this->substrat,

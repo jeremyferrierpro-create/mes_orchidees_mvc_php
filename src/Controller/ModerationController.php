@@ -65,7 +65,7 @@ class ModerationController extends AbstractController
             $this->redirectTo('/moderation');
         }
 
-        $this->orchids->setPublished($orchid->id, true);
+        $this->orchids->setModerationStatus($orchid->id, 'approved');
 
         // RG5 : confirmation de validation envoyée à l'auteur de la proposition.
         $this->notifierAuteur(
@@ -79,10 +79,12 @@ class ModerationController extends AbstractController
     }
 
     /**
-     * POST /moderation/{id}/reject — Refuse (supprime) la proposition et notifie l'auteur (RG5).
+     * POST /moderation/{id}/reject — Refuse la proposition et notifie l'auteur (RG5).
      *
-     * La proposition refusée est retirée du catalogue (elle n'a jamais été publiée) ;
-     * l'auteur en est informé par notification.
+     * REFUS SOFT : la fiche n'est PAS supprimée. Elle reste acquise au propriétaire
+     * qui l'a ajoutée à sa collection (la contrainte RESTRICT de collections.orchid_id
+     * l'exige tout autant que le cahier des charges). On la marque « rejected » et on
+     * la dépublie : elle ne rejoint jamais l'encyclopédie, et quitte la file de modération.
      *
      * @param string $id Slug de l'orchidée proposée.
      * @return void (redirection).
@@ -100,17 +102,17 @@ class ModerationController extends AbstractController
         $auteur = $orchid->proposedBy;
         $nom    = $orchid->scientificName();
 
-        // Rejet = suppression de la proposition non publiée.
-        $this->orchids->delete($orchid->id);
+        // Rejet soft : on conserve la plante (statut 'rejected', non publiée).
+        $this->orchids->setModerationStatus($orchid->id, 'rejected');
 
         // RG5 : notification de refus à l'auteur.
         $this->notifierAuteur(
             $auteur,
             'rejet',
-            sprintf('Votre proposition « %s » n\'a pas été retenue lors de la modération.', $nom)
+            sprintf('Votre proposition « %s » n\'a pas été retenue lors de la modération. Elle reste néanmoins dans votre collection.', $nom)
         );
 
-        $this->addFlash('Proposition refusée et auteur notifié.', 'success');
+        $this->addFlash('Proposition refusée (plante conservée) et auteur notifié.', 'success');
         $this->redirectTo('/moderation');
     }
 

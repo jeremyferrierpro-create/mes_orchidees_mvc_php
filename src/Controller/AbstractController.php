@@ -115,6 +115,24 @@ abstract class AbstractController
         return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
+    /**
+     * Le requérant préfère-t-il une réponse JSON ?
+     *
+     * Négociation par en-tête uniquement (`Accept: application/json` ou
+     * `X-Requested-With: XMLHttpRequest`). Partagée depuis C1 (marquage « lu »
+     * du toast) et D (actions de la modale) : le parcours formulaire HTML —
+     * flash + 302 — reste le comportement par défaut, aucune route de plus.
+     * Un changement d'état continue d'exiger une méthode POST.
+     *
+     * @return bool
+     */
+    protected function prefersJson(): bool
+    {
+        $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
+        return str_contains($accept, 'application/json')
+            || (string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';
+    }
+
     // ---------------------------------------------------------------------
     // REDIRECTION
     // ---------------------------------------------------------------------
@@ -122,10 +140,14 @@ abstract class AbstractController
     /**
      * Redirige (302) vers une URL et stoppe l'exécution.
      *
-     * @param string $url URL cible (relative à la base de l'app ou absolue).
-     * @return void
+     * Le type `never` traduit le contrat réel : la méthode termine la requête
+     * par `exit`, le code appelant situé après l'appel est inatteignable.
+     *
+     * @param string $url    URL cible (relative à la base de l'app ou absolue).
+     * @param int    $status Code HTTP (302 par défaut).
+     * @return never
      */
-    protected function redirectTo(string $url, int $status = 302): void
+    protected function redirectTo(string $url, int $status = 302): never
     {
         http_response_code($status);
         header('Location: ' . $url);

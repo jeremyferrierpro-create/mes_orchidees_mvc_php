@@ -97,6 +97,20 @@ function register_routes(Router $router): void
     $router->mapController('POST', '/notification/delete/{id}', \App\Controller\NotificationController::class, 'delete',   GRANT_AUTH);
     $router->mapController('GET',  '/notification/{id}',        \App\Controller\NotificationController::class, 'show',     GRANT_AUTH);
 
+    // --------- 4.3 bis Rappels de soins (RG3 étendu — cycle de vie) ---------
+    $router->mapController('GET',  '/rappels',                       \App\Controller\RappelController::class, 'index',   GRANT_AUTH);
+    // Flux JSON « rappels de soin devenus dus et non lus » — consommé par le toast
+    // persistant du jour J (Phase C1). GRANT_AUTH : le 403 du routeur protège la route.
+    $router->mapController('GET',  '/api/rappels/dus',                \App\Controller\RappelController::class, 'dus',      GRANT_AUTH);
+    // Phase D : fragment HTML de la modale « Gérer mes rappels » (mêmes listes que
+    // /rappels, rendu sans layout via renderPartial). GRANT_AUTH : un visiteur
+    // anonyme reçoit la 403 générique du front-controller, jamais un contenu tiers.
+    $router->mapController('GET',  '/rappels/modal',                \App\Controller\RappelController::class, 'modal',    GRANT_AUTH);
+    $router->mapController('POST', '/rappel/{id}/fait',              \App\Controller\RappelController::class, 'fait',    GRANT_AUTH);
+    $router->mapController('POST', '/rappel/{id}/ignorer',           \App\Controller\RappelController::class, 'ignorer', GRANT_AUTH);
+    $router->mapController('POST', '/rappel/{id}/report/{jours}',    \App\Controller\RappelController::class, 'report',  GRANT_AUTH);
+    $router->mapController('POST', '/rappel/delete/{id}',            \App\Controller\RappelController::class, 'delete',  GRANT_AUTH);
+
     // --------- 4.3 Utilisateurs (admin) ---------
     $router->mapController('GET',  '/users',            \App\Controller\UserController::class, 'index',   GRANT_ADMIN);
     $router->mapController('GET',  '/user/new',         \App\Controller\UserController::class, 'newForm', GRANT_ADMIN);

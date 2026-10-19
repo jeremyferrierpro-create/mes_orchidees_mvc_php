@@ -19,6 +19,7 @@
 namespace App\Controller;
 
 use App\Entity\Conseil;
+use App\Repository\CategorieConseilRepository;
 use App\Repository\ConseilRepository;
 
 class ConseilController extends AbstractController
@@ -27,11 +28,13 @@ class ConseilController extends AbstractController
     private const CARE_KEYS = ['temperature', 'arrosage', 'hygrometrie', 'rempotage', 'engrais', 'substrats'];
 
     private ConseilRepository $conseils;
+    private CategorieConseilRepository $categories;
 
     public function __construct()
     {
         parent::__construct();
-        $this->conseils = new ConseilRepository();
+        $this->conseils   = new ConseilRepository();
+        $this->categories = new CategorieConseilRepository();
     }
 
     // ---------------------------------------------------------------------
@@ -57,7 +60,6 @@ class ConseilController extends AbstractController
             'meta_description' => 'Conseils de culture des orchidées : arrosage, lumière, substrat, rempotage et fiches par espèce.',
         ], 'Conseils');
     }
-
     /**
      * GET /conseil/{id} — Fiche conseil détaillée (publique).
      *
@@ -93,10 +95,11 @@ class ConseilController extends AbstractController
     public function newForm(): string
     {
         return $this->render('pages/conseils/form', [
-            'conseil' => new Conseil(),
-            'mode'    => 'create',
-            'action'  => url('/conseil/new'),
-            'csrf'    => $this->getCsrfToken(),
+            'conseil'    => new Conseil(),
+            'mode'       => 'create',
+            'action'     => url('/conseil/new'),
+            'csrf'       => $this->getCsrfToken(),
+            'categories' => $this->categories->findAll(),
         ], 'Nouveau conseil');
     }
 
@@ -140,10 +143,11 @@ class ConseilController extends AbstractController
         }
 
         return $this->render('pages/conseils/form', [
-            'conseil' => $conseil,
-            'mode'    => 'update',
-            'action'  => url('/update/conseil'),
-            'csrf'    => $this->getCsrfToken(),
+            'conseil'    => $conseil,
+            'mode'       => 'update',
+            'action'     => url('/update/conseil'),
+            'csrf'       => $this->getCsrfToken(),
+            'categories' => $this->categories->findAll(),
         ], 'Modifier ' . $conseil->name);
     }
 
@@ -209,7 +213,17 @@ class ConseilController extends AbstractController
 
         $c->type     = $type;
         $c->name     = $name !== '' ? $name : $c->name;
-        $c->category = $this->strOrNull($_POST['category'] ?? null);
+        // La catégorie est soumise sous forme de label (select HTML + champ texte
+        // optionnel pour un nouveau libellé). Vocabulaire ouvert : on trouve ou on
+        // crée la référence dans `categories_conseil`.
+        $labelCategorie = $this->strOrNull($_POST['category'] ?? null);
+        if ($labelCategorie !== null) {
+            $c->idCategorie = $this->categories->findOrCreateLabel($labelCategorie);
+            $c->category     = $labelCategorie;
+        } else {
+            $c->idCategorie = null;
+            $c->category     = null;
+        }
         $c->img      = $this->strOrNull($_POST['img'] ?? null);
         $c->content  = $this->strOrNull($_POST['content'] ?? null);
 

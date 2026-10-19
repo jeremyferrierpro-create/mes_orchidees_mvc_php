@@ -23,12 +23,14 @@ use PDO;
 
 class SoinRepository
 {
-    /** Soins joint à leur collection (propriétaire) et à l'espèce (nom d'affichage). */
-    private const SELECT_JOINED = 'SELECT s.id, s.legacy_id, s.collection_id, s.soin_date, s.type, s.notes,
-                                          s.engrais, s.substrat, s.ravageurs, s.created_at,
+    /** Soins joint à leur collection (propriétaire), espèce (nom d'affichage) et type (label). */
+    private const SELECT_JOINED = 'SELECT s.id, s.legacy_id, s.collection_id, s.soin_date, s.id_type_soin,
+                                          ts.label AS type_label,
+                                          s.notes, s.engrais, s.substrat, s.ravageurs, s.created_at,
                                           o.name AS orchid_name
                                      FROM soins s
                                      JOIN collections c ON c.id = s.collection_id
+                                     JOIN types_soin  ts ON ts.id = s.id_type_soin
                                      LEFT JOIN orchids o ON o.id = c.orchid_id';
 
     private ?PDO $db;
@@ -119,8 +121,8 @@ class SoinRepository
         $id    = $this->uuid();
         $s->id = $id;
 
-        $sql = 'INSERT INTO soins (id, collection_id, soin_date, type, notes, engrais, substrat, ravageurs)
-                VALUES (:id, :collection_id, :soin_date, :type, :notes, :engrais, :substrat, :ravageurs)';
+        $sql = 'INSERT INTO soins (id, collection_id, soin_date, id_type_soin, notes, engrais, substrat, ravageurs)
+                VALUES (:id, :collection_id, :soin_date, :id_type_soin, :notes, :engrais, :substrat, :ravageurs)';
         $this->pdo()->prepare($sql)->execute($this->bind($s, $id));
         return $id;
     }
@@ -136,10 +138,14 @@ class SoinRepository
     {
         $sql = 'UPDATE soins s
                    JOIN collections c ON c.id = s.collection_id
-                    SET s.soin_date = :soin_date, s.type = :type, s.notes = :notes,
+                    SET s.soin_date = :soin_date, s.id_type_soin = :id_type_soin, s.notes = :notes,
                         s.engrais = :engrais, s.substrat = :substrat, s.ravageurs = :ravageurs
                   WHERE s.id = :id AND c.user_id = :uid';
+        // `collection_id` n'est PAS lié ici : le rattachement (donc la propriété RG1)
+        // est immuable lors d'une modification. Le binding du create() est filtré :
+        // lier un paramètre absent du SQL fait échouer l'exécution (HY093).
         $params = $this->bind($s, $s->id);
+        unset($params[':collection_id']);
         $params[':uid'] = $userId;
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute($params);
@@ -176,7 +182,7 @@ class SoinRepository
             ':id'            => $id,
             ':collection_id' => $s->collectionId,
             ':soin_date'     => $s->soinDate !== '' ? $s->soinDate : date('Y-m-d'),
-            ':type'          => $s->type,
+            ':id_type_soin'  => $s->idTypeSoin,
             ':notes'         => $s->notes,
             ':engrais'       => $s->engrais ? 1 : 0,
             ':substrat'      => $s->substrat ? 1 : 0,

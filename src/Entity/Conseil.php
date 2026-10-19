@@ -30,6 +30,10 @@ class Conseil
     public string $type = 'category';
     public string $name = '';
     public ?string $img = null;
+    /** FK vers `categories_conseil.id` — vocabulaire ouvert des catégories. */
+    public ?int $idCategorie = null;
+    /** Label transitoire (jointure `categories_conseil`, lecture seule).
+     *  Exposé par la propriété `category` pour compatibilité avec le code existant. */
     public ?string $category = null;
     public ?string $content = null;
     /** Carte de soins (tableau associatif souple, décodée du JSON MySQL). */
@@ -45,13 +49,15 @@ class Conseil
     public static function fromRow(array $row): self
     {
         $c = new self();
-        $c->id       = (string) ($row['id'] ?? '');
-        $c->type     = (string) ($row['type'] ?? 'category');
-        $c->name     = (string) ($row['name'] ?? '');
-        $c->img      = $row['img']      ?? null;
-        $c->category = $row['category'] ?? null;
-        $c->content  = $row['content']  ?? null;
-        $c->orchidId = $row['orchid_id'] ?? null;
+        $c->id          = (string) ($row['id'] ?? '');
+        $c->type        = (string) ($row['type'] ?? 'category');
+        $c->name        = (string) ($row['name'] ?? '');
+        $c->img         = $row['img']      ?? null;
+        // Jointure `categories_conseil` exposée par ConseilRepository sous l'alias `category`.
+        $c->idCategorie = isset($row['id_categorie']) && $row['id_categorie'] !== null ? (int) $row['id_categorie'] : null;
+        $c->category    = $row['category'] ?? null;
+        $c->content     = $row['content']  ?? null;
+        $c->orchidId    = $row['orchid_id'] ?? null;
 
         // care_cards : MySQL/MariaDB renvoie une chaîne JSON (ou déjà un tableau selon le driver).
         $raw = $row['care_cards'] ?? null;

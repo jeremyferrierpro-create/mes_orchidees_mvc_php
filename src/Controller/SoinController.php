@@ -9,38 +9,38 @@
  *
  * Constructeur SANS ARGUMENT (DefaultControllerResolver), dépendance composée ici.
  *
+ * Phase C0 : la génération/annulation des rappels est extraite dans
+ * `App\Service\RappelService`, partagé avec RappelController (action
+ * « Effectuer le soin » qui consigne le soin puis replanifie).
+ *
  * @package App\Controller
  * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
- * @version 3.0.0
- * @since   2026-10-17
+ * @version 3.1.0
+ * @since   2026-10-18
  */
 
 namespace App\Controller;
 
-use App\Entity\Notification;
 use App\Entity\Soin;
 use App\Repository\CollectionRepository;
-use App\Repository\NotificationRepository;
 use App\Repository\SoinRepository;
+use App\Repository\TypeSoinRepository;
+use App\Service\RappelService;
 
 class SoinController extends AbstractController
 {
-    /** Types de soin reconnus (sinon repli sur 'autre'). */
-    private const TYPES = ['arrosage', 'engrais', 'rempotage', 'substrat', 'ravageurs'];
-
-    /** Décalage (jours) du rappel automatique RG3 après un soin enregistré. */
-    private const RAPPORT_JOURS_RAPPEL = 7;
-
     private SoinRepository $soins;
-    private NotificationRepository $notifications;
+    private RappelService $rappels;
     private CollectionRepository $collections;
+    private TypeSoinRepository $typesSoin;
 
     public function __construct()
     {
         parent::__construct();
-        $this->soins        = new SoinRepository();
-        $this->notifications = new NotificationRepository();
-        $this->collections  = new CollectionRepository();
+        $this->soins       = new SoinRepository();
+        $this->rappels     = new RappelService();
+        $this->collections = new CollectionRepository();
+        $this->typesSoin   = new TypeSoinRepository();
     }
 
     /**
@@ -86,11 +86,25 @@ class SoinController extends AbstractController
 
         $this->soins->create($soin);
 
-        // RG3 — rappel automatique : à chaque soin enregistré, on programme une
-        // notification de rappel pour le prochain soin à J+7, destinée au propriétaire.
-        $this->genererRappelSoin($uid, $collectionId, $soin);
+        // RG3 étendu (opt-in) : à l'enregistrement du soin, l'utilisateur choisit
+        // explicitement si le prochain rappel doit être programmé. Le choix est
+        // persisté sur la plante (collections.rappel_actif).
+        // - absent du POST  → activé (rétro-compatibilité : comportement historique)
+        // - « 0 » (non coché) → désactivé
+        // - toute autre valeur (ex. « 1 » coché) → activé
+        $optIn = ((string) ($_POST['rappel_actif'] ?? '1')) !== '0';
+        $this->collections->setRappelActifForUser($collectionId, $uid, $optIn);
 
-        $this->addFlash('Soin enregistré.', 'success');
+        if ($optIn) {
+            // Rappel automatique : on programme/replanifie le prochain soin (dédupliqué).
+            $this->rappels->generer($uid, $collectionId, $soin);
+            $this->addFlash('Soin enregistré. Prochain rappel programmé.', 'success');
+        } else {
+            // Désactivation : aucun nouveau rappel ; un rappel déjà planifié est annulé
+            // (statut « ignore ») — la ligne historique est CONSERVÉE, jamais supprimée.
+            $this->rappels->annuler($uid, $collectionId);
+            $this->addFlash('Soin enregistré. Rappels désactivés pour cette plante.', 'success');
+        }
         $this->redirectTo('/collection/' . rawurlencode($collectionId));
     }
 
@@ -153,8 +167,13 @@ class SoinController extends AbstractController
      */
     private function fromRequest(Soin $s): Soin
     {
-        $type = trim((string) ($_POST['type'] ?? 'arrosage'));
-        $s->type = in_array($type, self::TYPES, true) ? $type : 'arrosage';
+        // Le type est soumis sous forme de label (select HTML). On le résout via
+        // le vocabulaire fermé `types_soin` ; tout label inconnu replie sur le
+        // premier type (« arrosage »), préservant la comportement historique.
+        $label   = trim((string) ($_POST['type'] ?? 'arrosage'));
+        $typeId  = $this->typesSoin->findIdByLabel($label) ?? $this->typesSoin->defaultId();
+        $s->idTypeSoin = $typeId;
+        $s->typeLabel  = $label;
 
         $date = trim((string) ($_POST['soin_date'] ?? ''));
         // Format ISO accepté ; sinon date du jour (colonne NOT NULL).
@@ -179,43 +198,5 @@ class SoinController extends AbstractController
     {
         $value = is_scalar($value) ? trim((string) $value) : '';
         return $value === '' ? null : $value;
-    }
-
-    /**
-     * RG3 — génère la notification de rappel du prochain soin (J+7) pour le propriétaire.
-     *
-     * Le destinataire est l'utilisateur connecté (RG1 : on ne notifie jamais un tiers) ;
-     * la notification est rattachée à l'entrée de collection concernée. Toute erreur de
-     * jointure (plante introuvable) est tolérée : le soin est déjà enregistré.
-     *
-     * @param string $uid          Propriétaire (session).
-     * @param string $collectionId Entrée de collection.
-     * @param Soin   $soin         Le soin vient d'être enregistré.
-     * @return void
-     */
-    private function genererRappelSoin(string $uid, string $collectionId, Soin $soin): void
-    {
-        $plante   = $this->collections->findByIdForUser($collectionId, $uid);
-        $nomPlante = $plante?->displayName() ?? 'votre plante';
-
-        $dateSoin = $soin->soinDate !== '' ? $soin->soinDate : date('Y-m-d');
-        $nextDate = date('d/m/Y', strtotime($dateSoin . ' +' . self::RAPPORT_JOURS_RAPPEL . ' days'));
-
-        $message = sprintf(
-            'Rappel automatique : prochain soin (%s) prévu le %s pour %s.',
-            $soin->typeLabel(),
-            $nextDate,
-            $nomPlante
-        );
-
-        $notif = new Notification();
-        $notif->userId       = $uid;
-        $notif->collectionId = $collectionId;
-        $notif->type         = 'rappel_soin';
-        $notif->message      = $message;
-        $notif->isRead       = false;
-        $notif->notifDate    = date('Y-m-d H:i:s');
-
-        $this->notifications->create($notif);
     }
 }
