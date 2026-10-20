@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hors ligne — MES ORCHIDÉES</title>
+    <!--
+        FICHIER : public/offline.html — page de repli hors ligne (F3, phase E11)
+        Servie par le Service Worker (sw.js) en HTTP 504 quand une navigation
+        ne peut être satisfaite ni par le réseau ni par le cache. Elle remplace
+        l'ancien repli qui renvoyait silencieusement la page d'accueil.
+
+        CONTRAINTES DE SURVIE (à ne jamais retirer) :
+        - 100 % autonome : aucun CSS, JS, police ou image externe ;
+          elle ne doit dépendre d'aucune ressource réseau pour transmettre
+          son message essentiel.
+        - Précachée par sw.js (entrée « ./offline.html » de CACHE_ASSETS).
+        - Ne simule jamais une action métier : aucune donnée de soin, de
+          collection ou de notification n'est affichée ni prétendue enregistrée.
+    -->
+    <style>
+        /* Styles élémentaires intégrés : la page reste lisible sans style.css. */
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, 'Times New Roman', serif;
+            background: #10231a;
+            color: #f2ede3;
+            line-height: 1.6;
+        }
+        main {
+            max-width: 34rem;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            border: 1px solid #3c5a46;
+            border-radius: 0.75rem;
+            background: #16302344;
+        }
+        h1 {
+            font-size: 1.6rem;
+            margin: 0 0 1rem;
+            color: #cfe3c8;
+        }
+        p { margin: 0.75rem 0; }
+        .detail { color: #b9c7ad; font-size: 0.95rem; }
+        a.retry {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.7rem 1.6rem;
+            border: 2px solid #cfe3c8;
+            border-radius: 2rem;
+            color: #f2ede3;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a.retry:hover, a.retry:focus {
+            background: #cfe3c8;
+            color: #10231a;
+            outline: 3px solid #f2ede3;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Connexion indisponible</h1>
+        <p>
+            MES ORCHIDÉES ne peut pas afficher cette page tant que le réseau
+            n'est pas rétabli. Les pages déjà consultées peuvent rester
+            accessibles hors ligne&nbsp;; les pages privées (votre collection,
+            vos rappels, l'administration) ne le sont pas, par protection
+            des données.
+        </p>
+        <p class="detail">
+            Aucune action (soin enregistré, modification de collection,
+            notification) n'a été réalisée pendant votre absence de connexion :
+            rien n'est mis en file d'attente ni simulé.
+        </p>
+        <p class="detail">
+            Pages publiques disponibles hors ligne si elles ont été chargées
+            auparavant : accueil, encyclopédie (sans les photographies),
+            conseils, accessibilité, mentions légales et confidentialité.
+            La connexion et l'inscription ne sont pas disponibles sans réseau.
+        </p>
+        <a class="retry" href="/">Réessayer lorsque le réseau revient</a>
+    </main>
+</body>
+</html>
