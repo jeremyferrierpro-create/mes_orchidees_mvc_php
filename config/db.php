@@ -7,7 +7,7 @@
  * (décision D3), en remplacement de l'ancienne connexion PostgreSQL/Neon.
  *
  * @package App\Config
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */
@@ -46,9 +46,12 @@ function getDb(): PDO
     };
 
     // --- Construction du DSN ---
-    $dsn = $env('DB_DSN');
+    $dsn  = $env('DB_DSN');
     $user = $env('DB_USER');
-    $pass = $env('DB_PASS');
+    // DB_PASS est le nom canonique lu par le code ; DB_PASSWORD est accepté
+    // comme alias pour rester compatible avec les configurations existantes (.env).
+    // Le correctif harmonise les deux noms : DB_PASS prime, DB_PASSWORD en secours.
+    $pass = $env('DB_PASS') ?? $env('DB_PASSWORD');
 
     if (!is_string($dsn) || $dsn === '') {
         // Mode variables discrètes : on assemble le DSN MySQL soi-même.

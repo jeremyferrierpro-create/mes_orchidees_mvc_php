@@ -9,7 +9,7 @@
  * avec les colonnes snake_case est assurée dans NotificationRepository::fromRow().
  *
  * @package App\Entity
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.1.0
  * @since   2026-10-18 (C0 : le rappel porte le type de soin attendu)
  */

@@ -12,7 +12,7 @@
  * insérée (le `DEFAULT (UUID())` de MySQL n'est pas récupérable pour une colonne CHAR).
  *
  * @package App\Repository
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.1.0
  * @since   2026-10-18 (C0 : type de soin + images portés par les rappels)
  */

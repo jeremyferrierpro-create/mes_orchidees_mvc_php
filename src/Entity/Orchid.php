@@ -9,7 +9,7 @@
  * `id` est un slug texte (ex : "acacalis_cyanea"), convention héritée du JSON d'origine.
  *
  * @package App\Entity
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

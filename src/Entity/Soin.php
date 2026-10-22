@@ -9,7 +9,7 @@
  * `id` est un UUID CHAR(36) généré par MySQL (DEFAULT (UUID())) : jamais saisi en écriture.
  *
  * @package App\Entity
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

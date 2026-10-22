@@ -12,7 +12,7 @@
  * pas de PASSWORD_BCRYPT épinglé en dur).
  *
  * @package App\Service
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

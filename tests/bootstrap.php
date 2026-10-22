@@ -12,7 +12,7 @@
  * l'exécution. Sans elles, les tests base sont SKIPPED (ni échec, ni faux PASS).
  *
  * @package App\Tests
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 1.0.0
  * @since   2026-10-17
  */

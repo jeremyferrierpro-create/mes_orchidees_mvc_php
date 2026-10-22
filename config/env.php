@@ -9,7 +9,7 @@
  * Déplacé depuis api/config/env.php lors de la restructuration MVC (Phase 02).
  *
  * @package App\Config
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

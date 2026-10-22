@@ -23,7 +23,7 @@
  * sont composées ici, injectables pour les tests.
  *
  * @package App\Service
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 1.0.0
  * @since   2026-10-18 (phase C0)
  */

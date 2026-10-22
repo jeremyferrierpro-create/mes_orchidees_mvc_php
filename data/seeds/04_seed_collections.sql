@@ -25,44 +25,44 @@
 
 INSERT INTO collections (legacy_id, user_id, orchid_id, location, notes, added_at)
 VALUES
-    -- Jean-Marc : col-001 → ACACALIS CYANEA
+    -- Utilisateur (fictif) : col-001 → ACACALIS CYANEA
     ('col-001',
-     (SELECT id FROM users WHERE email = 'admin@mesorchidees.fr' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'utilisateur@example.com' LIMIT 1),
      'acacalis_cyanea',
      'Veranda Sud', 'Tres belle floraison en mars',
      '2026-03-01 00:00:00'),
 
-    -- Jean-Marc : col-002 → BLETILLA OCHRACEA
+    -- Utilisateur (fictif) : col-002 → BLETILLA OCHRACEA
     ('col-002',
-     (SELECT id FROM users WHERE email = 'admin@mesorchidees.fr' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'utilisateur@example.com' LIMIT 1),
      'bletilla_ochracea',
      'Jardin pleine terre', 'Hiberne en hiver',
      '2026-04-15 00:00:00'),
 
-    -- Jean-Marc : col-003 → VANILLA PLANIFOLIA
+    -- Utilisateur (fictif) : col-003 → VANILLA PLANIFOLIA
     ('col-003',
-     (SELECT id FROM users WHERE email = 'admin@mesorchidees.fr' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'utilisateur@example.com' LIMIT 1),
      'vanilla_planifolia',
      'Serre chauffee', 'Pollinisation manuelle en cours',
      '2026-05-10 00:00:00'),
 
-    -- Jessica : col-004 → ANGRAECUM SESQUIPEDALE
+    -- Admin (fictif) : col-004 → ANGRAECUM SESQUIPEDALE
     ('col-004',
-     (SELECT id FROM users WHERE email = 'jessica.amateur@gmail.com' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
      'angraecum_sesquipedale',
      'Fenetre Est salon', 'Premier arrosage soin enregistre',
      '2026-06-01 00:00:00'),
 
-    -- Jessica : col-005 → AERANGIS FASTUOSA
+    -- Admin (fictif) : col-005 → AERANGIS FASTUOSA
     ('col-005',
-     (SELECT id FROM users WHERE email = 'jessica.amateur@gmail.com' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
      'aerangis_fastuosa',
      'Terrarium humide', NULL,
      '2026-07-20 00:00:00'),
 
-    -- Jessica : col-006 → ANGULOA VIRGINALIS
+    -- Admin (fictif) : col-006 → ANGULOA VIRGINALIS
     ('col-006',
-     (SELECT id FROM users WHERE email = 'jessica.amateur@gmail.com' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
      'anguloa_virginalis',
      'Serre froide', 'Repos hivernal programme',
      '2026-08-01 00:00:00')

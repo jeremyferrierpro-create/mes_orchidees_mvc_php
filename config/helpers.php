@@ -7,7 +7,7 @@
  * servie à la racine du domaine ou sous un sous-répertoire (APP_BASE_PATH sur Render).
  *
  * @package App\Config
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

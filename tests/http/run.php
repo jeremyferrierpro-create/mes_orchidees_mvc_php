@@ -27,7 +27,7 @@
  *   php tests/http/run.php
  *
  * @package App\Tests\Http
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 1.0.0
  * @since   2026-10-17
  */

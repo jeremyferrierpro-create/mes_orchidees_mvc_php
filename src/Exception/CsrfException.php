@@ -7,7 +7,7 @@
  * ne soit pas re-qualifié à tort en erreur serveur 500.
  *
  * @package App\Exception
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

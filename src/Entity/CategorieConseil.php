@@ -8,7 +8,7 @@
  * dans cette table — choix documenté dans docs/architecture/00-arbitrage-denormalisation.md).
  *
  * @package App\Entity
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-18
  */

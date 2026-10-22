@@ -14,7 +14,7 @@
  * « Effectuer le soin » qui consigne le soin puis replanifie).
  *
  * @package App\Controller
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.1.0
  * @since   2026-10-18
  */

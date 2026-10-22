@@ -22,57 +22,57 @@ DELETE FROM notifications WHERE legacy_id IN (1, 2, 3, 4, 5, 6);
 
 INSERT INTO notifications (legacy_id, user_id, collection_id, type, message, is_read, notif_date)
 VALUES
-    -- Notification 1 : Jean-Marc / col-001 / non lue
+    -- Notification 1 : Utilisateur / col-001 / non lue
     (1,
-     (SELECT id FROM users WHERE email = 'admin@mesorchidees.fr' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'utilisateur@example.com' LIMIT 1),
      (SELECT id FROM collections WHERE legacy_id = 'col-001' LIMIT 1),
      'rappel_soin',
-     'Jean-Marc : prochain arrosage prevu le 21/08/2026 pour ACACALIS CYANEA.',
+     'Utilisateur : prochain arrosage prevu le 21/08/2026 pour ACACALIS CYANEA.',
      FALSE,
      '2026-08-14 00:00:00'),
 
-    -- Notification 2 : Jean-Marc / col-002 / non lue
+    -- Notification 2 : Utilisateur / col-002 / non lue
     (2,
-     (SELECT id FROM users WHERE email = 'admin@mesorchidees.fr' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'utilisateur@example.com' LIMIT 1),
      (SELECT id FROM collections WHERE legacy_id = 'col-002' LIMIT 1),
      'rappel_soin',
-     'Jean-Marc : arrosage a prevoir pour BLETILLA OCHRACEA.',
+     'Utilisateur : arrosage a prevoir pour BLETILLA OCHRACEA.',
      FALSE,
      '2026-08-17 00:00:00'),
 
-    -- Notification 3 : Jean-Marc / col-003 / non lue
+    -- Notification 3 : Utilisateur / col-003 / non lue
     (3,
-     (SELECT id FROM users WHERE email = 'admin@mesorchidees.fr' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'utilisateur@example.com' LIMIT 1),
      (SELECT id FROM collections WHERE legacy_id = 'col-003' LIMIT 1),
      'rappel_soin',
-     'Jean-Marc : apport d eau et d engrais a prevoir pour VANILLA PLANIFOLIA.',
+     'Utilisateur : apport d eau et d engrais a prevoir pour VANILLA PLANIFOLIA.',
      FALSE,
      '2026-08-19 00:00:00'),
 
-    -- Notification 4 : Jessica / col-004 / LUE
+    -- Notification 4 : Admin / col-004 / LUE
     (4,
-     (SELECT id FROM users WHERE email = 'jessica.amateur@gmail.com' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
      (SELECT id FROM collections WHERE legacy_id = 'col-004' LIMIT 1),
      'rappel_soin',
-     'Jessica : arrosage enregistre pour ANGRAECUM SESQUIPEDALE. Le prochain rappel est fixe au 22/08/2026.',
+     'Admin : arrosage enregistre pour ANGRAECUM SESQUIPEDALE. Le prochain rappel est fixe au 22/08/2026.',
      TRUE,
      '2026-08-15 00:00:00'),
 
-    -- Notification 5 : Jessica / col-005 / non lue
+    -- Notification 5 : Admin / col-005 / non lue
     (5,
-     (SELECT id FROM users WHERE email = 'jessica.amateur@gmail.com' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
      (SELECT id FROM collections WHERE legacy_id = 'col-005' LIMIT 1),
      'rappel_soin',
-     'Jessica : prochain arrosage prevu le 23/08/2026 pour AERANGIS FASTUOSA.',
+     'Admin : prochain arrosage prevu le 23/08/2026 pour AERANGIS FASTUOSA.',
      FALSE,
      '2026-08-16 00:00:00'),
 
-    -- Notification 6 : Jessica / col-006 / non lue
+    -- Notification 6 : Admin / col-006 / non lue
     (6,
-     (SELECT id FROM users WHERE email = 'jessica.amateur@gmail.com' LIMIT 1),
+     (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
      (SELECT id FROM collections WHERE legacy_id = 'col-006' LIMIT 1),
      'rappel_soin',
-     'Jessica : arrosage a prevoir pour ANGULOA VIRGINALIS.',
+     'Admin : arrosage a prevoir pour ANGULOA VIRGINALIS.',
      FALSE,
      '2026-08-16 00:00:00');
 

@@ -11,7 +11,7 @@
  * Lancement :  php -S localhost:8000 -t public server.php
  *
  * @package App
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  */
 
 $uri     = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));

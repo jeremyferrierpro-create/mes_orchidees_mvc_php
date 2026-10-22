@@ -24,7 +24,7 @@
  *     repositories). Aucun faux contrôleur, aucune réponse simulée.
  *
  * @package App\Tests\Http
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 1.0.0
  * @since   2026-10-17
  */

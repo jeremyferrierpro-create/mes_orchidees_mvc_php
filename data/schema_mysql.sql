@@ -350,7 +350,8 @@ JOIN orchids o ON o.id = c.orchid_id;
 --   04_seed_collections.sql  (collection de demonstration)
 --   05_seed_soins.sql        (historique de soins)
 --   06_seed_notifications.sql(rappels)
--- Mots de passe demo (test local uniquement) : jeremy.ferrierpro@gmail.com / demoadmin
+-- Comptes de demonstration : 100% fictifs (example.com), mots de passe en
+-- clair NON publies — voir data/seeds/01_seed_users.sql (decision D4).
 -- ===========================================================================
 
 SET FOREIGN_KEY_CHECKS = 1;

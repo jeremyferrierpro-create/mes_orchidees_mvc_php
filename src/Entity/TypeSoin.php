@@ -8,7 +8,7 @@
  * et ne sont pas destinées à évoluer dynamiquement (vocabulaire métier stable).
  *
  * @package App\Entity
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-18
  */

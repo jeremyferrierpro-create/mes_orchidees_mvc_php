@@ -11,7 +11,7 @@
  * HORS docroot et donc inaccessibles directement par le web (décision D4).
  *
  * @package App\Public
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

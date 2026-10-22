@@ -18,7 +18,7 @@
  * L'URL publique est reconstruite par l'entité (Collection::photoUrl() → asset()).
  *
  * @package App\Service
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-18
  */

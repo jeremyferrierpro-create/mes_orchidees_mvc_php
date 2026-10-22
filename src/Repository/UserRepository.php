@@ -11,7 +11,7 @@
  * de valeurs utilisateur) — protection contre les injections SQL.
  *
  * @package App\Repository
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.0.0
  * @since   2026-10-17
  */

@@ -17,7 +17,7 @@
  * Constructeur SANS ARGUMENT (DefaultControllerResolver), dépendance composée ici.
  *
  * @package App\Controller
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 3.1.0
  * @since   2026-10-18
  */

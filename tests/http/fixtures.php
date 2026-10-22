@@ -15,7 +15,7 @@
  * d'environnement, jamais de fichiers suivis, et rien n'est affiché.
  *
  * @package App\Tests\Http
- * @author  Jérémy Ferrier <jeremy.ferrierpro@gmail.com>
+ * @author  Jérémy Ferrier
  * @version 1.0.0
  * @since   2026-10-17
  */
